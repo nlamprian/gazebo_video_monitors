@@ -1,0 +1,83 @@
+<sdf version='1.6'>
+  <world name='default'>
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    <include>
+      <name>oak_tree</name>
+      <uri>model://oak_tree</uri>
+      <pose frame=''>0 0 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>cinder_block</name>
+      <uri>model://cinder_block</uri>
+      <pose frame=''>-15.0 3.0 0 0 0 0</pose>
+    </include>
+
+    <plugin name="gvm_multicamera_bootstrapper_plugin" filename="libgvm_multicamera_bootstrapper_plugin.so">
+      <sensor name="video_monitor_dual_camera" type="gvm_multicamera">
+        <update_rate>30</update_rate>
+        <!-- Uncomment to configure the camera poses -->
+        <!-- <always_on>true</always_on> -->
+        <!-- <visualize>true</visualize> -->
+
+        <camera name="world_camera">
+          <pose>3.0 0 1.0 0 0 3.1416</pose>
+          <horizontal_fov>1.5708</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.01</near>
+            <far>100</far>
+          </clip>
+        </camera>
+
+        <camera name="robot_camera">
+          <pose>-0.5 0.0 0.3 0 0 0</pose>
+          <horizontal_fov>0.523599</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.01</near>
+            <far>100</far>
+          </clip>
+        </camera>
+
+        <plugin name="video_monitor_plugin" filename="libgazebo_video_monitor_plugin.so">
+          <setCameraService>gazebo/set_camera</setCameraService>
+          <startRecordingService>gazebo/start_recording</startRecordingService>
+          <stopRecordingService>gazebo/stop_recording</stopRecordingService>
+          <savePath>/var/tmp/gazebo_video_monitor</savePath>
+          <addTimestampInFilename>true</addTimestampInFilename>
+          <logWallTime>false</logWallTime>
+          <robotReference>
+            <model>cinder_block</model>
+            <link>link</link>
+          </robotReference>
+        </plugin>
+      </sensor>
+
+      <worldReference>
+        <model>ground_plane</model>
+        <link>link</link>
+      </worldReference>
+    </plugin>
+
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose frame=''>16.0588 9.50857 7.93841 -0 0.295644 -2.61982</pose>
+        <view_controller>orbit</view_controller>
+        <projection_type>perspective</projection_type>
+      </camera>
+    </gui>
+  </world>
+</sdf>

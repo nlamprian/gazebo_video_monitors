@@ -1,0 +1,5 @@
+bool discard     # True to discard the recording
+string filename  # Filename without extension
+---
+string path      # Absolute path to the recording
+bool success
