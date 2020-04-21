@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>gazebo_video_monitor_plugins</name>
+  <version>0.0.0</version>
+  <description>The gazebo_video_monitor_plugins package</description>
+
+  <author email="nlamprian@gmail.com">Nick Lamprianidis</author>
+  <maintainer email="nlamprian@gmail.com">Nick Lamprianidis</maintainer>
+
+  <license>GPLv3</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>gazebo_ros</build_depend>
+  <build_depend>libopencv-dev</build_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>gazebo_ros</build_export_depend>
+  <build_export_depend>libopencv-dev</build_export_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>libopencv-dev</exec_depend>
+
+  <export>
+    <gazebo_ros plugin_path="${prefix}/lib" />
+  </export>
+</package>
