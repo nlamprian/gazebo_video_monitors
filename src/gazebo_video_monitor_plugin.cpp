@@ -160,6 +160,12 @@ void GazeboVideoMonitorPlugin::addEntityEventCallback(const std::string &name) {
   add_entity_connection_.reset();
 }
 
+std::string GazeboVideoMonitorPlugin::getRecordingPath(std::string filename,
+                                                       bool add_timestamp) {
+  if (add_timestamp) filename += "-" + start_encoder_timestamp_;
+  return (save_path_ / filename.append(".mp4")).string();
+}
+
 cv::Mat GazeboVideoMonitorPlugin::toCvMat(
     const sensors::GvmMulticameraSensor::ImageDataPtr &data) const {
   cv::Mat image(data->height, data->width, CV_8UC3,
@@ -242,8 +248,7 @@ std::string GazeboVideoMonitorPlugin::stopRecording(bool discard,
     ROS_INFO_NAMED("video_monitor",
                    "GazeboVideoMonitorPlugin: Discarding active recording");
   } else {
-    if (add_timestamp_in_filename_) filename += "-" + start_encoder_timestamp_;
-    auto file = (save_path_ / filename.append(".mp4")).string();
+    auto file = getRecordingPath(filename, add_timestamp_in_filename_);
     if (video_encoder_.SaveToFile(file)) {
       path = file;
       ROS_INFO_STREAM_NAMED(
@@ -270,23 +275,28 @@ bool GazeboVideoMonitorPlugin::startRecordingServiceCallback(
   rendering::CameraPtr camera = sensor_->getCamera(
       world_as_main_view_ ? camera_name_world_ : camera_name_robot_);
 
-  // Start recording
+  // Stop active recording
   if (sensor_->isRecording()) {
     ROS_WARN_NAMED("video_monitor",
                    "GazeboVideoMonitorPlugin: There is already an active "
                    "recording; resetting");
     stopRecording(true);
   }
-  video_encoder_.Start("mp4", "", camera->ImageWidth(), camera->ImageHeight(),
-                       static_cast<uint>(sensor_->UpdateRate()), 590000);
 
-  // Set state
+  // Set start timestamps
   start_recording_time_ = world_->RealTime();
   std::time_t t = std::time(nullptr);
   std::tm tm = *std::localtime(&t);
   std::stringstream ss;
   ss << std::put_time(&tm, "%Y-%m-%d-%H-%M-%S");
   start_encoder_timestamp_ = ss.str();
+
+  // Start recording
+  video_encoder_.Start("mp4", getRecordingPath("tmp-recording"),
+                       camera->ImageWidth(), camera->ImageHeight(),
+                       static_cast<uint>(sensor_->UpdateRate()), 590000);
+
+  // Set state
   sensor_->setRecording(true);
 
   return true;
