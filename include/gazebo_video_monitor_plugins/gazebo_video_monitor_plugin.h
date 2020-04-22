@@ -55,6 +55,7 @@ class GazeboVideoMonitorPlugin : public SensorPlugin {
  private:
   void initialize();
   void addEntityEventCallback(const std::string &name);
+  std::string getRecordingPath(std::string filename, bool add_timestamp = true);
   cv::Mat toCvMat(
       const sensors::GvmMulticameraSensor::ImageDataPtr &data) const;
   void writeWindow(cv::Mat &image_main, cv::Mat &image_window);
