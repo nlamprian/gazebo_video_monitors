@@ -20,7 +20,8 @@
 namespace gazebo {
 
 GazeboVideoMonitorPlugin::GazeboVideoMonitorPlugin()
-    : spinner_(1, &callback_queue_),
+    : number_of_initial_attach_retries_(0),
+      spinner_(1, &callback_queue_),
       log_wall_time_(false),
       world_as_main_view_(false),
       add_timestamp_in_filename_(true) {}
@@ -102,7 +103,8 @@ void GazeboVideoMonitorPlugin::Init() {
                   });
 
   if (has_robot_model) {
-    initialize();
+    deferred_init_thread_ =
+        std::thread(&GazeboVideoMonitorPlugin::initialize, this);
   } else {
     gzdbg << "GazeboVideoMonitorPlugin: Waiting for model "
           << robot_model_config_.model_name << "\n";
@@ -120,6 +122,17 @@ void GazeboVideoMonitorPlugin::Reset() {
 void GazeboVideoMonitorPlugin::initialize() {
   // Attach robot camera to robot link
   sensor_->attachToLink(camera_name_robot_, robot_model_config_, true);
+
+  // HACK The camera is not always moved correctly, even though its world pose
+  // is reported just fine. It only gets fixed after a few tries
+  // TODO Investigate this and handle properly
+  if (sdf_->HasElement("numberOfInitialAttachRetries"))
+    number_of_initial_attach_retries_ =
+        sdf_->Get<int>("numberOfInitialAttachRetries");
+  for (int i = 0; i < number_of_initial_attach_retries_; ++i) {
+    common::Time::Sleep(common::Time(1.0));
+    sensor_->attachToLink(camera_name_robot_, robot_model_config_);
+  }
 
   new_images_connection_ = sensor_->connectNewImages(std::bind(
       &GazeboVideoMonitorPlugin::onNewImages, this, std::placeholders::_1));
