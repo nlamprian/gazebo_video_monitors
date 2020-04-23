@@ -36,6 +36,8 @@ namespace gazebo {
  * addTimestampInFilename: flag to indicate whether to append the start
  * timestamp in the filename of a recording
  * logWallTime: flag to indicate whether to log wall or real time
+ * numberOfInitialAttachRetries(optional): number of times to try attaching the
+ * cameras during initialization. Defaults to 0
  * robotReference/modelParam(optional): name of the parameter on the parameter
  * server that holds the name of the robot model with which to associate the
  * robot camera
@@ -79,6 +81,7 @@ class GazeboVideoMonitorPlugin : public SensorPlugin {
   const std::string camera_name_world_ = "world_camera";
   const std::string camera_name_robot_ = "robot_camera";
   ReferenceModelConfig robot_model_config_;
+  int number_of_initial_attach_retries_;
 
   sensors::GvmMulticameraSensorPtr sensor_;
   event::ConnectionPtr new_images_connection_;

@@ -40,4 +40,5 @@ rosservice call /gazebo/set_camera "{camera_name: robot_camera, model_name: robo
 Known Issues
 ---
 
-The camera visualizations (not the cameras used for recording) are created and set correctly, but they don't get attached to the models.
+* The camera visualizations (not the cameras used for recording) are created and set correctly, but they don't get attached to the models.
+* The robot camera of GazeboVideoMonitorPlugin is not always moved correctly during initialization. The numberOfInitialAttachRetries parameter was introduced as a temporary fix.
