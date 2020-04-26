@@ -72,6 +72,8 @@ class GazeboVideoMonitorPlugin : public SensorPlugin {
       gazebo_video_monitor_plugins::StopRecordingRequest &req,
       gazebo_video_monitor_plugins::StopRecordingResponse &res);
 
+  std::string logger_prefix_;
+
   sdf::ElementPtr sdf_;
   physics::WorldPtr world_;
 
