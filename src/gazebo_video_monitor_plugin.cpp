@@ -20,7 +20,8 @@
 namespace gazebo {
 
 GazeboVideoMonitorPlugin::GazeboVideoMonitorPlugin()
-    : number_of_initial_attach_retries_(0),
+    : logger_prefix_(getClassName<GazeboVideoMonitorPlugin>() + ": "),
+      number_of_initial_attach_retries_(0),
       spinner_(1, &callback_queue_),
       log_wall_time_(false),
       world_as_main_view_(false),
@@ -42,29 +43,26 @@ void GazeboVideoMonitorPlugin::Load(sensors::SensorPtr _sensor,
   // Get multicamera sensor
   sensor_ = std::static_pointer_cast<sensors::GvmMulticameraSensor>(_sensor);
   if (sensor_ == nullptr)
-    gzthrow("GazeboVideoMonitorPlugin: Failed to get gvm_multicamera sensor");
+    gzthrow(logger_prefix_ + "Failed to get gvm_multicamera sensor");
 
   // Confirm cameras
   auto camera_names = sensor_->getCameraNames();
   if (camera_names.size() != 2 or camera_names[0] != camera_name_world_ or
       camera_names[1] != camera_name_robot_)
-    gzthrow(
-        "GazeboVideoMonitorPlugin: Wrong cameras configuration; please provide "
-        "two cameras with the names " +
-        camera_name_world_ + " and " + camera_name_robot_);
+    gzthrow(logger_prefix_ + "Wrong cameras configuration; " +
+            "please provide two cameras with the names " + camera_name_world_ +
+            " and " + camera_name_robot_);
 
   // Get save path
   if (not sdf_->HasElement("savePath"))
-    gzthrow("GazeboVideoMonitorPlugin: Failed to get savePath");
+    gzthrow(logger_prefix_ + "Failed to get savePath");
   std::string save_path = sdf_->Get<std::string>("savePath");
   save_path_ = boost::filesystem::path(save_path);
   if (not boost::filesystem::exists(save_path_)) {
     if (not boost::filesystem::create_directory(save_path_))
-      gzthrow("GazeboVideoMonitorPlugin: Failed to create save directory " +
-              save_path);
-    ROS_INFO_STREAM_NAMED("video_monitor",
-                          "GazeboVideoMonitorPlugin: Save directory "
-                              << save_path_ << " has been created");
+      gzthrow(logger_prefix_ + "Failed to create save directory " + save_path);
+    ROS_INFO_STREAM(logger_prefix_ << "Save directory " << save_path_
+                                   << " has been created");
   }
 
   if (sdf_->HasElement("addTimestampInFilename"))
@@ -87,7 +85,7 @@ void GazeboVideoMonitorPlugin::Load(sensors::SensorPtr _sensor,
 
   // Get robot reference model
   if (not sdf_->HasElement("robotReference"))
-    gzthrow("GazeboVideoMonitorPlugin: Failed to get robotReference");
+    gzthrow(logger_prefix_ + "Failed to get robotReference");
   robot_model_config_ =
       parseReferenceModelConfig(sdf_->GetElement("robotReference"), *nh_);
 }
@@ -106,7 +104,7 @@ void GazeboVideoMonitorPlugin::Init() {
     deferred_init_thread_ =
         std::thread(&GazeboVideoMonitorPlugin::initialize, this);
   } else {
-    gzdbg << "GazeboVideoMonitorPlugin: Waiting for model "
+    gzdbg << logger_prefix_ << "Waiting for model "
           << robot_model_config_.model_name << "\n";
     add_entity_connection_ = event::Events::ConnectAddEntity(
         std::bind(&GazeboVideoMonitorPlugin::addEntityEventCallback, this,
@@ -139,18 +137,18 @@ void GazeboVideoMonitorPlugin::initialize() {
 
   // Initialize set camera service
   if (not sdf_->HasElement("setCameraService"))
-    gzthrow("GazeboVideoMonitorPlugin: Failed to get setCameraService");
+    gzthrow(logger_prefix_ + "Failed to get setCameraService");
   sensor_->initRos(nh_, sdf_->Get<std::string>("setCameraService"));
 
   // Get start recording service name
   if (not sdf_->HasElement("startRecordingService"))
-    gzthrow("GazeboVideoMonitorPlugin: Failed to get startRecordingService");
+    gzthrow(logger_prefix_ + "Failed to get startRecordingService");
   std::string start_service_name =
       sdf_->Get<std::string>("startRecordingService");
 
   // Get stop recording service name
   if (not sdf_->HasElement("stopRecordingService"))
-    gzthrow("GazeboVideoMonitorPlugin: Failed to get stopRecordingService");
+    gzthrow(logger_prefix_ + "Failed to get stopRecordingService");
   std::string stop_service_name =
       sdf_->Get<std::string>("stopRecordingService");
 
@@ -161,13 +159,14 @@ void GazeboVideoMonitorPlugin::initialize() {
   stop_recording_service_ = nh_->advertiseService(
       stop_service_name,
       &GazeboVideoMonitorPlugin::stopRecordingServiceCallback, this);
+
+  gzdbg << logger_prefix_ << "Initialized\n";
 }
 
 void GazeboVideoMonitorPlugin::addEntityEventCallback(const std::string &name) {
   if (name != robot_model_config_.model_name) return;
 
-  gzdbg << "GazeboVideoMonitorPlugin: Found model "
-        << robot_model_config_.model_name << "\n";
+  gzdbg << logger_prefix_ << "Found model " << name << "\n";
   deferred_init_thread_ =
       std::thread(&GazeboVideoMonitorPlugin::initialize, this);
   add_entity_connection_.reset();
@@ -258,19 +257,14 @@ std::string GazeboVideoMonitorPlugin::stopRecording(bool discard,
 
   std::string path;
   if (discard) {
-    ROS_INFO_NAMED("video_monitor",
-                   "GazeboVideoMonitorPlugin: Discarding active recording");
+    ROS_INFO_STREAM(logger_prefix_ << "Discarding active recording");
   } else {
     auto file = getRecordingPath(filename, add_timestamp_in_filename_);
     if (video_encoder_.SaveToFile(file)) {
       path = file;
-      ROS_INFO_STREAM_NAMED(
-          "video_monitor",
-          "GazeboVideoMonitorPlugin: Recording saved in " << path);
+      ROS_INFO_STREAM(logger_prefix_ << "Recording saved in " << path);
     } else {
-      ROS_WARN_NAMED(
-          "video_monitor",
-          "GazeboVideoMonitorPlugin: Failed to save recording; resetting");
+      ROS_WARN_STREAM(logger_prefix_ << "Failed to save recording; resetting");
     }
   }
   if (path.empty()) video_encoder_.Reset();
@@ -290,9 +284,8 @@ bool GazeboVideoMonitorPlugin::startRecordingServiceCallback(
 
   // Stop active recording
   if (sensor_->isRecording()) {
-    ROS_WARN_NAMED("video_monitor",
-                   "GazeboVideoMonitorPlugin: There is already an active "
-                   "recording; resetting");
+    ROS_WARN_STREAM(logger_prefix_
+                    << "There is already an active recording; resetting");
     stopRecording(true);
   }
 
@@ -319,9 +312,7 @@ bool GazeboVideoMonitorPlugin::stopRecordingServiceCallback(
     gazebo_video_monitor_plugins::StopRecordingRequest &req,
     gazebo_video_monitor_plugins::StopRecordingResponse &res) {
   if (not sensor_->isRecording()) {
-    ROS_WARN_NAMED(
-        "video_monitor",
-        "GazeboVideoMonitorPlugin: No active recording; ignoring request");
+    ROS_WARN_STREAM(logger_prefix_ << "No active recording; ignoring request");
     res.success = false;
     return true;
   }
