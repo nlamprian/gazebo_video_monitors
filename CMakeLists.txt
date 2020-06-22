@@ -12,7 +12,7 @@ find_package(catkin REQUIRED
 
 find_package(gazebo REQUIRED)
 
-find_package(OpenCV 3 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 ################################################
 ## Declare ROS messages, services and actions ##
