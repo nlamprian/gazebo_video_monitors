@@ -2,7 +2,14 @@
 #define GAZEBO_VIDEO_MONITOR_PLUGINS_INTERNAL_UTILS_H
 
 #include <cxxabi.h>
+#include <chrono>
+#include <ctime>
+#include <memory>
+#include <sstream>
 #include <string>
+#include <vector>
+
+#include <boost/filesystem/operations.hpp>
 
 #include <ros/ros.h>
 
@@ -20,31 +27,76 @@ static std::string getClassName() {
   return name.substr(name.rfind("::") + 2);
 }
 
-static void parseReferenceModelConfig(const sdf::ElementPtr &sdf,
-                                      ReferenceModelConfig &config) {
-  if (sdf->HasElement("model") and config.model_name.empty())
-    config.model_name = sdf->Get<std::string>("model");
-  config.link_name =
-      sdf->HasElement("link") ? sdf->Get<std::string>("link") : "link";
+static bool createDirectory(const boost::filesystem::path &path) {
+  if (not boost::filesystem::exists(path)) {
+    if (not boost::filesystem::create_directory(path)) return false;
+    ROS_INFO_STREAM(path << " directory has been created");
+  }
+  return true;
 }
 
-static ReferenceModelConfig parseReferenceModelConfig(
-    const sdf::ElementPtr &sdf) {
-  ReferenceModelConfig config;
-  parseReferenceModelConfig(sdf, config);
-  return config;
+namespace internal {
+
+static void parseRefModelConfig(const sdf::ElementPtr &sdf,
+                                const RefModelConfigPtr &config) {
+  if (sdf->HasElement("model") and config->model_name.empty())
+    config->model_name = sdf->Get<std::string>("model");
+  if (sdf->HasElement("link"))
+    config->link_name = sdf->Get<std::string>("link");
 }
 
-static ReferenceModelConfig parseReferenceModelConfig(
-    const sdf::ElementPtr &sdf, ros::NodeHandle &nh) {
-  ReferenceModelConfig config;
+}  // namespace internal
+
+/**
+ * @brief Parses a basic reference model configuration.
+ * @note Expects the following configuration:
+ *   - model: name of the model with which to associate the camera
+ *   - link (optional, defaults to 'link'): name of the link to which to attach
+ *     the camera
+ */
+static RefModelConfigConstPtr parseRefModelConfig(const sdf::ElementPtr &sdf) {
+  RefModelConfigPtr config = std::make_shared<RefModelConfig>();
+  internal::parseRefModelConfig(sdf, config);
+  return std::move(config);
+}
+
+/**
+ * @brief Parses a reference model configuration.
+ * @note Expects the following configuration:
+ *   - modelParam: name of the parameter on the parameter server that holds the
+ *     name of the model with which to associate the camera
+ *   - model: name of the model with which to associate the camera. It's ignored
+ *     if modelParam is given
+ *   - link (optional, defaults to 'link'): name of the link to which to attach
+ *     the camera
+ */
+static RefModelConfigConstPtr parseRefModelConfig(const sdf::ElementPtr &sdf,
+                                                  ros::NodeHandle &nh) {
+  RefModelConfigPtr config = std::make_shared<RefModelConfig>();
   if (sdf->HasElement("modelParam")) {
     auto model_param = sdf->Get<std::string>("modelParam");
-    if (not nh.getParam(model_param, config.model_name))
+    if (not nh.getParam(model_param, config->model_name))
       ROS_WARN_STREAM("Failed to retrieve " << model_param << " parameter");
   }
-  parseReferenceModelConfig(sdf, config);
-  return config;
+  internal::parseRefModelConfig(sdf, config);
+  return std::move(config);
+}
+
+static std::string getStringTimestamp(std::time_t t) {
+  std::tm tm = *std::localtime(&t);
+  std::stringstream ss;
+  ss << std::put_time(&tm, "%Y-%m-%d-%H-%M-%S");
+  return ss.str();
+}
+
+static std::string toString(const std::vector<std::string> &names,
+                            const std::string &delimiter = ", ") {
+  std::stringstream ss;
+  for (size_t i = 0; i < names.size(); ++i) {
+    ss << names[i];
+    if (i < names.size() - 1) ss << delimiter;
+  }
+  return ss.str();
 }
 
 #endif  // GAZEBO_VIDEO_MONITOR_PLUGINS_INTERNAL_UTILS_H

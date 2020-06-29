@@ -113,9 +113,9 @@ rendering::CameraPtr GvmMulticameraSensor::getCamera(const std::string &name) {
   return cameras_.at(name).camera;
 }
 
-bool GvmMulticameraSensor::attachToLink(
-    const std::string &camera_name, const ReferenceModelConfig &model_config,
-    bool on_init) {
+bool GvmMulticameraSensor::attachToLink(const std::string &camera_name,
+                                        const RefModelConfig &model_config,
+                                        bool on_init) {
   if (cameras_.count(camera_name) == 0) {
     gzerr << "GvmMulticameraSensor: Failed to attach camera " << camera_name
           << " to link; camera does not exist\n";
@@ -278,7 +278,7 @@ bool GvmMulticameraSensor::setCameraServiceCallback(
   }
 
   // Prepare model configuration
-  ReferenceModelConfig model_config;
+  RefModelConfig model_config;
   if (req.model_name.empty()) {
     model_config.model_name = link_->GetModel()->GetName();
     model_config.link_name = link_->GetName();

@@ -57,19 +57,25 @@
           <startRecordingService>gazebo/start_recording</startRecordingService>
           <stopRecordingService>gazebo/stop_recording</stopRecordingService>
           <savePath>/var/tmp/gazebo_video_monitor</savePath>
-          <addTimestampInFilename>true</addTimestampInFilename>
-          <logWallTime>false</logWallTime>
-          <robotReference>
+          <recorder>
+            <width>640</width>
+            <height>480</height>
+            <bitRate>590000</bitRate>
+            <logMetadata>true</logMetadata>
+            <logWallTime>false</logWallTime>
+            <addTimestampInFilename>true</addTimestampInFilename>
+          </recorder>
+          <cameraReference name="robot_camera">
             <model>cinder_block</model>
             <link>link</link>
-          </robotReference>
+          </cameraReference>
         </plugin>
       </sensor>
 
-      <worldReference>
+      <sensorReference>
         <model>ground_plane</model>
         <link>link</link>
-      </worldReference>
+      </sensorReference>
     </plugin>
 
     <gui fullscreen='0'>

@@ -23,7 +23,7 @@ namespace sensors {
 
 /**
  * @brief Creates multiple cameras and publishes an event with synchronized
- * images from all these cameras.
+ * images from all of these cameras.
  * @note Provides a ROS interface for dynamically updating the configuration of
  * a camera. If a model is not specified in the request, the model/link
  * configuration defaults to the model/link to which the sensor is attached.
@@ -189,8 +189,7 @@ class GZ_SENSORS_VISIBLE GvmMulticameraSensor : public Sensor {
       const std::function<NewImagesFn> &callback);
   rendering::CameraPtr getCamera(const std::string &name);
   bool attachToLink(const std::string &camera_name,
-                    const ReferenceModelConfig &model_config,
-                    bool on_init = false);
+                    const RefModelConfig &model_config, bool on_init = false);
   void setRecording(bool recording);
   bool isRecording() const;
 

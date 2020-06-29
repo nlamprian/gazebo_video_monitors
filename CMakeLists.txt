@@ -26,7 +26,7 @@ add_message_files(
 add_service_files(
   FILES
     SetCamera.srv
-    StartRecording.srv
+    StartGvmRecording.srv
     StopRecording.srv
 )
 
@@ -78,7 +78,15 @@ target_link_libraries(gvm_multicamera_bootstrapper_plugin
   ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES}
 )
 
+add_library(gazebo_video_recorder
+  src/utils/gazebo_video_recorder.cpp
+)
+target_link_libraries(gazebo_video_recorder
+  ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${OpenCV_LIBRARIES}
+)
+
 add_library(gazebo_video_monitor_plugin
+  src/gazebo_monitor_base_plugin.cpp
   src/gazebo_video_monitor_plugin.cpp
 )
 add_dependencies(gazebo_video_monitor_plugin
@@ -86,6 +94,7 @@ add_dependencies(gazebo_video_monitor_plugin
 )
 target_link_libraries(gazebo_video_monitor_plugin
   ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${OpenCV_LIBRARIES}
+  gazebo_video_recorder
 )
 
 #############
@@ -95,6 +104,7 @@ target_link_libraries(gazebo_video_monitor_plugin
 install(
   TARGETS 
     gvm_multicamera_bootstrapper_plugin
+    gazebo_video_recorder
     gazebo_video_monitor_plugin
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

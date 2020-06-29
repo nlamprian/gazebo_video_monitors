@@ -1,2 +1,3 @@
+bool disable_window
 bool world_as_main_view
 ---

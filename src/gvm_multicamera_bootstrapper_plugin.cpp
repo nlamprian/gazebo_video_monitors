@@ -5,56 +5,53 @@
 
 namespace gazebo {
 
-GvmMulticameraBootstrapperPlugin::GvmMulticameraBootstrapperPlugin() {
+GvmMulticameraBootstrapperPlugin::GvmMulticameraBootstrapperPlugin()
+    : logger_prefix_(getClassName<GvmMulticameraBootstrapperPlugin>() + ": ") {
   sensors::SensorFactory::RegisterSensor(
       "gvm_multicamera", reinterpret_cast<sensors::SensorFactoryFn>(
                              &sensors::GvmMulticameraSensor::newSensor));
 }
 
 GvmMulticameraBootstrapperPlugin::~GvmMulticameraBootstrapperPlugin() {
+  if (not link_) return;
   std::string scoped_sensor_name =
-      world_->Name() + "::" + world_model_config_.model_name +
-      "::" + world_model_config_.link_name +
+      world_->Name() + "::" + link_->GetScopedName() +
       "::" + sdf_->GetElement("sensor")->Get<std::string>("name");
   event::Events::removeSensor(scoped_sensor_name);
 }
 
 void GvmMulticameraBootstrapperPlugin::Load(physics::WorldPtr _world,
                                             sdf::ElementPtr _sdf) {
-  world_ = _world;
   sdf_ = _sdf;
+  world_ = _world;
 
   // Confirm sensor configuration
   if (not _sdf->HasElement("sensor") or
       _sdf->GetElement("sensor")->Get<std::string>("type") != "gvm_multicamera")
-    gzthrow(
-        "GvmMulticameraBootstrapperPlugin: Failed to find gvm_multicamera "
-        "sensor configuration");
+    gzthrow(logger_prefix_ +
+            "Failed to find gvm_multicamera sensor configuration");
 
-  // Load world model configuration
-  if (not _sdf->HasElement("worldReference"))
-    gzthrow("GvmMulticameraBootstrapperPlugin: Failed to get worldReference");
-  world_model_config_ =
-      parseReferenceModelConfig(_sdf->GetElement("worldReference"));
+  // Load sensor model configuration
+  if (not _sdf->HasElement("sensorReference"))
+    gzthrow(logger_prefix_ + "Failed to get sensorReference");
+  auto model_config =
+      parseRefModelConfig(_sdf->GetElement("sensorReference"));
+
+  // Get sensor model
+  auto model = world_->ModelByName(model_config->model_name);
+  if (not model)
+    gzthrow(logger_prefix_ + "Failed to get model " + model_config->model_name);
+
+  // Get sensor link
+  link_ = model->GetLink(model_config->link_name);
+  if (not link_)
+    gzthrow(logger_prefix_ + "Failed to get link " + model_config->link_name +
+            " in model " + model_config->model_name);
 }
 
 void GvmMulticameraBootstrapperPlugin::Init() {
-  // Get world model
-  auto model = world_->ModelByName(world_model_config_.model_name);
-  if (not model)
-    gzthrow("GvmMulticameraBootstrapperPlugin: Failed to get model " +
-            world_model_config_.model_name);
-
-  // Get link
-  auto link = model->GetLink(world_model_config_.link_name);
-  if (not link)
-    gzthrow("GvmMulticameraBootstrapperPlugin: Failed to get link " +
-            world_model_config_.link_name + " in model " +
-            world_model_config_.model_name);
-
-  // Add a multicamera sensor to the link
   event::Events::createSensor(sdf_->GetElement("sensor"), world_->Name(),
-                              link->GetScopedName(), link->GetId());
+                              link_->GetScopedName(), link_->GetId());
 }
 
 GZ_REGISTER_WORLD_PLUGIN(GvmMulticameraBootstrapperPlugin)

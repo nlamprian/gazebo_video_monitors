@@ -4,8 +4,8 @@
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/physics/physics.hh>
 
-#include <gazebo_video_monitor_plugins/sensors/gvm_multicamera_sensor.h>
 #include <gazebo_video_monitor_plugins/internal/utils.h>
+#include <gazebo_video_monitor_plugins/sensors/gvm_multicamera_sensor.h>
 
 namespace gazebo {
 
@@ -13,11 +13,11 @@ namespace gazebo {
  * @brief Registers the GvmMulticameraSensor class in the SensorFactory, and
  * adds a gvm_multicamera sensor to a given model.
  * @note Expects the following configuration:
- * sensor: configuration of a sensor of type gvm_multicamera
- * worldReference/model: name of the model with which to associate the
- * multicamera sensor (normally ground_plane)
- * worldReference/link: name of the link of the world model to which to add
- * the multicamera sensor
+ *   - sensor: configuration of a gvm_multicamera sensor
+ *   - sensorReference: reference model configuration for the multicamera
+ *     sensor. It contains the name of the model (normally ground_plane) with
+ *     which to associate the sensor, and the name of the link to which to
+ *     attach the sensor (see \ref parseRefModelConfig)
  */
 class GvmMulticameraBootstrapperPlugin : public WorldPlugin {
  public:
@@ -27,9 +27,10 @@ class GvmMulticameraBootstrapperPlugin : public WorldPlugin {
   virtual void Init() override;
 
  private:
-  physics::WorldPtr world_;
+  std::string logger_prefix_;
   sdf::ElementPtr sdf_;
-  ReferenceModelConfig world_model_config_;
+  physics::WorldPtr world_;
+  physics::LinkPtr link_;
 };
 
 }  // namespace gazebo
