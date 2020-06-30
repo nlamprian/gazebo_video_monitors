@@ -75,7 +75,8 @@ std::string GazeboVideoRecorder::stop(bool discard, std::string filename) {
       path = file;
       ROS_INFO_STREAM(logger_prefix_ << "Recording saved in " << path);
     } else {
-      ROS_WARN_STREAM(logger_prefix_ << "Failed to save recording; resetting");
+      ROS_WARN_STREAM(logger_prefix_ << "Failed to save recording " << file
+                                     << "; resetting");
     }
   }
   if (path.empty()) video_encoder_.Reset();

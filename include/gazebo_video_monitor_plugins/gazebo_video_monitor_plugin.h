@@ -33,7 +33,7 @@ namespace gazebo {
  *   - recorder: configuration of the video recorder
  *     (see \ref GazeboVideoRecorder)
  *   - cameraReference: reference model configuration with a name attribute
- *     pointing for the robot camera (see \ref parseRefModelConfig)
+ *     pointing to the robot camera (see \ref parseRefModelConfig)
  */
 class GazeboVideoMonitorPlugin : public GazeboMonitorBasePlugin {
  public:

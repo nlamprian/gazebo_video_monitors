@@ -9,7 +9,7 @@ GazeboVideoMonitorPlugin::GazeboVideoMonitorPlugin()
     : GazeboMonitorBasePlugin(getClassName<GazeboVideoMonitorPlugin>()),
       camera_names_({"world_camera", "robot_camera"}) {}
 
-GazeboVideoMonitorPlugin::~GazeboVideoMonitorPlugin() { recorder_.reset(); }
+GazeboVideoMonitorPlugin::~GazeboVideoMonitorPlugin() { recorder_->reset(); }
 
 void GazeboVideoMonitorPlugin::Load(sensors::SensorPtr _sensor,
                                     sdf::ElementPtr _sdf) {
@@ -112,7 +112,7 @@ bool GazeboVideoMonitorPlugin::stopRecordingServiceCallback(
 
   std::lock_guard<std::mutex> lock(recorder_mutex_);
   res.path = stopRecording(req.discard, req.filename);
-  res.success = not res.path.empty();
+  res.success = not res.path.empty() or req.discard;
   return true;
 }
 

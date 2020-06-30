@@ -6,6 +6,7 @@
     <include>
       <uri>model://ground_plane</uri>
     </include>
+
     <include>
       <name>oak_tree</name>
       <uri>model://oak_tree</uri>
@@ -17,12 +18,69 @@
       <pose frame=''>-15.0 3.0 0 0 0 0</pose>
     </include>
 
+    <actor name="actor">
+      <skin>
+        <filename>walk.dae</filename>
+        <scale>1.0</scale>
+      </skin>
+      <pose>-2 0 0 0 0 0</pose>
+      <animation name="walking">
+        <filename>walk.dae</filename>
+        <scale>1.000000</scale>
+        <interpolate_x>true</interpolate_x>
+      </animation>
+      <script>
+        <loop>true</loop>
+        <delay_start>0.000000</delay_start>
+        <auto_start>true</auto_start>
+        <trajectory id="0" type="walking">
+          <waypoint>
+            <time>0</time>
+            <pose>-2 0 0 0 0 0</pose>
+          </waypoint>
+          <waypoint>
+            <time>1</time>
+            <pose>-2 0 0 0 0 1.5708</pose>
+          </waypoint>
+          <waypoint>
+            <time>8</time>
+            <pose>-2 6 0 0 0 1.5708</pose>
+          </waypoint>
+          <waypoint>
+            <time>9</time>
+            <pose>-2 6 0 0 0 3.1416</pose>
+          </waypoint>
+          <waypoint>
+            <time>16</time>
+            <pose>-8 6 0 0 0 3.1416</pose>
+          </waypoint>
+          <waypoint>
+            <time>17</time>
+            <pose>-8 6 0 0 0 -1.5708</pose>
+          </waypoint>
+          <waypoint>
+            <time>24</time>
+            <pose>-8 0 0 0 0 -1.5708</pose>
+          </waypoint>
+          <waypoint>
+            <time>25</time>
+            <pose>-8 0 0 0 0 0</pose>
+          </waypoint>
+          <waypoint>
+            <time>32</time>
+            <pose>-2 0 0 0 0 0</pose>
+          </waypoint>
+        </trajectory>
+      </script>
+    </actor>
+
     <plugin name="gvm_multicamera_bootstrapper_plugin" filename="libgvm_multicamera_bootstrapper_plugin.so">
       <sensor name="video_monitor_dual_camera" type="gvm_multicamera">
         <update_rate>30</update_rate>
-        <!-- Uncomment to configure the camera poses -->
-        <!-- <always_on>true</always_on> -->
-        <!-- <visualize>true</visualize> -->
+        <!-- Uncomment only to... -->
+        <always_on>true</always_on>
+        <visualize>true</visualize>
+        <!-- configure the camera poses -->
 
         <camera name="world_camera">
           <pose>3.0 0 1.0 0 0 3.1416</pose>
@@ -39,8 +97,8 @@
         </camera>
 
         <camera name="robot_camera">
-          <pose>-0.5 0.0 0.3 0 0 0</pose>
-          <horizontal_fov>0.523599</horizontal_fov>
+          <pose>-0.5 0 0.3 0 0 0</pose>
+          <horizontal_fov>0.823599</horizontal_fov>
           <image>
             <width>640</width>
             <height>480</height>
@@ -80,7 +138,7 @@
 
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose frame=''>16.0588 9.50857 7.93841 -0 0.295644 -2.61982</pose>
+        <pose frame=''>-18.7493 11.279 3.00685 0 0.123644 -0.767817</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>

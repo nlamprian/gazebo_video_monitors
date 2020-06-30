@@ -49,6 +49,7 @@ void GazeboMonitorBasePlugin::Load(sensors::SensorPtr _sensor,
   spinner_.start();
 
   // Get camera reference configs
+  if (not _sdf->HasElement("cameraReference")) return;
   auto names = sensor_->getCameraNames();
   auto sdf_cam_ref = _sdf->GetElement("cameraReference");
   while (sdf_cam_ref) {
@@ -56,8 +57,7 @@ void GazeboMonitorBasePlugin::Load(sensors::SensorPtr _sensor,
     if (std::find(names.begin(), names.end(), name) == names.end())
       gzthrow(logger_prefix_ +
               "Invalid camera reference; there is no camera with name " + name);
-    cam_ref_configs_[name] =
-        parseRefModelConfig(sdf_->GetElement("cameraReference"), *nh_);
+    cam_ref_configs_[name] = parseRefModelConfig(sdf_cam_ref, *nh_);
     sdf_cam_ref = sdf_cam_ref->GetNextElement("cameraReference");
   }
 }

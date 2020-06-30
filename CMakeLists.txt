@@ -43,6 +43,7 @@ catkin_package(
     include
   LIBRARIES
     gvm_multicamera_bootstrapper_plugin
+    gazebo_video_recorder
     gazebo_video_monitor_plugin
   CATKIN_DEPENDS
     roscpp
