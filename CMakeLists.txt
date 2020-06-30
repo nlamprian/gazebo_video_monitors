@@ -5,9 +5,10 @@ add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED
   COMPONENTS
-    roscpp
     message_generation
     gazebo_ros
+    roscpp
+    std_srvs
 )
 
 find_package(gazebo REQUIRED)
@@ -45,10 +46,12 @@ catkin_package(
     gvm_multicamera_bootstrapper_plugin
     gazebo_video_recorder
     gazebo_video_monitor_plugin
+    gazebo_multi_video_monitor_plugin
   CATKIN_DEPENDS
-    roscpp
-    message_runtime
     gazebo_ros
+    message_runtime
+    roscpp
+    std_srvs
   DEPENDS
     OpenCV
 )
@@ -98,6 +101,18 @@ target_link_libraries(gazebo_video_monitor_plugin
   gazebo_video_recorder
 )
 
+add_library(gazebo_multi_video_monitor_plugin
+  src/gazebo_monitor_base_plugin.cpp
+  src/gazebo_multi_video_monitor_plugin.cpp
+)
+add_dependencies(gazebo_multi_video_monitor_plugin
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(gazebo_multi_video_monitor_plugin
+  ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${OpenCV_LIBRARIES}
+  gazebo_video_recorder
+)
+
 #############
 ## Install ##
 #############
@@ -107,6 +122,7 @@ install(
     gvm_multicamera_bootstrapper_plugin
     gazebo_video_recorder
     gazebo_video_monitor_plugin
+    gazebo_multi_video_monitor_plugin
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

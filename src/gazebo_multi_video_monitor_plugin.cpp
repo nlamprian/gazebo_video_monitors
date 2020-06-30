@@ -1,0 +1,146 @@
+#include <ctime>
+
+#include <gazebo_video_monitor_plugins/gazebo_multi_video_monitor_plugin.h>
+#include <gazebo_video_monitor_plugins/internal/utils.h>
+
+namespace gazebo {
+
+GazeboMultiVideoMonitorPlugin::GazeboMultiVideoMonitorPlugin()
+    : GazeboMonitorBasePlugin(getClassName<GazeboMultiVideoMonitorPlugin>()),
+      add_timestamp_in_filename_(true) {}
+
+GazeboMultiVideoMonitorPlugin::~GazeboMultiVideoMonitorPlugin() {
+  for (auto &recorder : recorders_) recorder.second->reset();
+}
+
+void GazeboMultiVideoMonitorPlugin::Load(sensors::SensorPtr _sensor,
+                                         sdf::ElementPtr _sdf) {
+  GazeboMonitorBasePlugin::Load(_sensor, _sdf);
+
+  // Get recorder config
+  if (not sdf_->HasElement("recorder"))
+    gzthrow(logger_prefix_ + "Failed to get recorder");
+  auto sdf_recorder = sdf_->GetElement("recorder");
+
+  // Get add timestamp flag
+  if (sdf_recorder->HasElement("addTimestampInFilename"))
+    add_timestamp_in_filename_ =
+        sdf_recorder->Get<bool>("addTimestampInFilename");
+
+  // Confirm presence of cameras
+  auto names = sensor_->getCameraNames();
+  if (names.empty())
+    ROS_WARN_STREAM(logger_prefix_ << "There are no cameras in the sensor");
+
+  // Initialize recorders
+  auto rate = static_cast<unsigned int>(sensor_->UpdateRate());
+  auto ns = getClassName<GazeboMultiVideoMonitorPlugin>();
+  for (const auto &name : names) {
+    recorders_[name] = std::make_shared<GazeboVideoRecorder>(rate, ns, name);
+    recorders_[name]->load(world_, sdf_recorder);
+    // NOTE Only the group directory should have the timestamp
+    recorders_[name]->setAddTimestampInFilename(false);
+  }
+}
+
+void GazeboMultiVideoMonitorPlugin::Reset() {
+  std::lock_guard<std::mutex> lock(recorders_mutex_);
+  if (sensor_->isRecording()) stopRecording(true);
+}
+
+void GazeboMultiVideoMonitorPlugin::initRos() {
+  GazeboMonitorBasePlugin::initRos();
+
+  // Get start recording service name
+  if (not sdf_->HasElement("startRecordingService"))
+    gzthrow(logger_prefix_ + "Failed to get startRecordingService");
+  auto start_service_name = sdf_->Get<std::string>("startRecordingService");
+
+  // Get stop recording service name
+  if (not sdf_->HasElement("stopRecordingService"))
+    gzthrow(logger_prefix_ + "Failed to get stopRecordingService");
+  auto stop_service_name = sdf_->Get<std::string>("stopRecordingService");
+
+  // Initialize recording services
+  start_recording_service_ = nh_->advertiseService(
+      start_service_name,
+      &GazeboMultiVideoMonitorPlugin::startRecordingServiceCallback, this);
+  stop_recording_service_ = nh_->advertiseService(
+      stop_service_name,
+      &GazeboMultiVideoMonitorPlugin::stopRecordingServiceCallback, this);
+}
+
+void GazeboMultiVideoMonitorPlugin::onNewImages(
+    const ImageDataPtrVector &images) {
+  std::unique_lock<std::mutex> lock(recorders_mutex_, std::try_to_lock);
+  if (not sensor_->isRecording() or not lock.owns_lock()) return;
+
+  for (const auto &image : images) recorders_[image->name]->addFrame(image);
+}
+
+bool GazeboMultiVideoMonitorPlugin::stopRecording(
+    bool discard, boost::filesystem::path group_directory) {
+  sensor_->setRecording(false);
+
+  bool success = true;
+  for (auto &recorder : recorders_) {
+    auto filename = group_directory / recorder.first;
+    auto path = recorder.second->stop(discard, filename.string());
+    if (path.empty() and not discard) success = false;
+  }
+
+  return success;
+}
+
+bool GazeboMultiVideoMonitorPlugin::startRecordingServiceCallback(
+    std_srvs::EmptyRequest & /*req*/, std_srvs::EmptyResponse & /*res*/) {
+  std::lock_guard<std::mutex> lock(recorders_mutex_);
+
+  // Stop active recording
+  if (sensor_->isRecording()) {
+    ROS_WARN_STREAM(logger_prefix_
+                    << "There is already an active recording; resetting");
+    stopRecording(true);
+  }
+
+  // Start recording
+  file_timestamp_ = getStringTimestamp(std::time(nullptr));
+  auto start_time = world_->RealTime();
+  for (auto &recorder : recorders_)
+    recorder.second->start(save_path_, file_timestamp_, start_time);
+
+  // Set state
+  sensor_->setRecording(true);
+
+  return true;
+}
+
+bool GazeboMultiVideoMonitorPlugin::stopRecordingServiceCallback(
+    gazebo_video_monitor_plugins::StopRecordingRequest &req,
+    gazebo_video_monitor_plugins::StopRecordingResponse &res) {
+  if (not sensor_->isRecording()) {
+    ROS_WARN_STREAM(logger_prefix_ << "No active recording; ignoring request");
+    res.success = false;
+    return true;
+  }
+
+  // Create group directory
+  boost::filesystem::path group_directory = req.filename;
+  if (add_timestamp_in_filename_) group_directory += "-" + file_timestamp_;
+  boost::filesystem::path group_save_path = save_path_ / group_directory;
+  if (not req.discard and not createDirectory(group_save_path)) {
+    ROS_WARN_STREAM(logger_prefix_ + "Failed to create directory " +
+                    group_save_path.string());
+    res.success = false;
+    return true;
+  }
+
+  std::lock_guard<std::mutex> lock(recorders_mutex_);
+  res.success = stopRecording(req.discard, group_directory);
+  if (not req.discard) res.path = group_save_path.string();
+  return true;
+}
+
+GZ_REGISTER_SENSOR_PLUGIN(GazeboMultiVideoMonitorPlugin)
+
+}  // namespace gazebo

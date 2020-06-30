@@ -53,6 +53,10 @@ void GazeboVideoRecorder::load(const physics::WorldPtr &world,
 
 void GazeboVideoRecorder::reset() { video_encoder_.Reset(); }
 
+void GazeboVideoRecorder::setAddTimestampInFilename(bool state) {
+  add_timestamp_in_filename_ = state;
+}
+
 void GazeboVideoRecorder::start(const boost::filesystem::path &save_path,
                                 const std::string &file_timestamp,
                                 const common::Time &start_time) {

@@ -37,6 +37,7 @@ class GazeboVideoRecorder {
   ~GazeboVideoRecorder();
   void load(const physics::WorldPtr &world, const sdf::ElementPtr &sdf);
   void reset();
+  void setAddTimestampInFilename(bool state);
   void start(const boost::filesystem::path &save_path,
              const std::string &file_timestamp, const common::Time &start_time);
   std::string stop(bool discard, std::string filename = "");

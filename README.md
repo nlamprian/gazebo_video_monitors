@@ -3,6 +3,8 @@ gazebo_video_monitor_plugins
 
 gazebo_video_monitor_plugins provides a gazebo multicamera sensor that can be used for creating different types of videos with multiple views into the gazebo world.
 
+There are currently two plugins in the package which are explained next. More plugins can be developed, with minimal effort, to fit arbitrary use cases.
+
 GazeboVideoMonitorPlugin
 ---
 
@@ -23,6 +25,19 @@ Use the stop_recording service to save or discard a recording. The filename must
 ```bash
 rosservice call /gazebo/stop_recording "{discard: false, filename: navigation-test}"
 ```
+
+GazeboMultiVideoMonitorPlugin
+---
+
+The GazeboMultiVideoMonitorPlugin plugin records multiple videos from different cameras simultaneously.
+
+![multi-video-monitor-plugin](assets/multi-video-monitor-plugin.gif)
+
+An arbitrary number of cameras can be set up, which the plugin will read and record a video for each one of them. Time metadata can be logged in the videos as well. To configure the plugin, see the [gazebo_multi_video_monitor_plugin.world](test/worlds/gazebo_multi_video_monitor_plugin.world) file. The plugin exposes two ROS services to control the recordings.
+
+Use the start_recording service to initiate a recording. There are no arguments.
+
+Use the stop_recording service to save or discard a recording, as explained in [GazeboVideoMonitorPlugin](#gazebovideomonitorplugin). The recordings are saved together in the subdirectory under the directory defined in the plugin configuration.
 
 Camera Configuration
 ---
