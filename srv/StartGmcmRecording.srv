@@ -1,0 +1,4 @@
+# Start recording service for the Gazebo Multi Camera Monitor plugin
+
+gazebo_video_monitor_plugins/Strings cameras
+---

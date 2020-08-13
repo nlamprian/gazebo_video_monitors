@@ -1,0 +1,297 @@
+<sdf version='1.6'>
+  <world name='default'>
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <include>
+      <name>cafe_table</name>
+      <uri>model://cafe_table</uri>
+      <pose frame=''>2.97776 -4.02635 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>construction_cone</name>
+      <uri>model://construction_cone</uri>
+      <pose frame=''>0.973297 -4.01539 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>brick_wall</name>
+      <uri>model://brick_box_3x1x3</uri>
+      <pose frame=''>-0.255953 4.08823 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>cardboard_box</name>
+      <uri>model://cardboard_box</uri>
+      <pose frame=''>-1.01505 3.89095 3.149 0 0 0</pose>
+    </include>
+    <include>
+      <name>construction_barrel</name>
+      <uri>model://construction_barrel</uri>
+      <pose frame=''>2.02717 4.09943 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>calibration_plane</name>
+      <uri>model://calibration_plane</uri>
+      <pose frame=''>2.98457 0.021399 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>ladder</name>
+      <uri>model://drc_practice_ladder</uri>
+      <pose frame=''>-0.471936 2.57024 0 0 0 0</pose>
+    </include>
+    <include>
+      <name>dumpster</name>
+      <uri>model://dumpster</uri>
+      <pose frame=''>-5.10429 -1.75276 0 0 0 1.5708</pose>
+    </include>
+    <include>
+      <name>euro_pallet</name>
+      <uri>model://euro_pallet</uri>
+      <pose frame=''>-5.00513 0.509399 0.071997 0 0 0</pose>
+    </include>
+    <include>
+      <name>lamp_post</name>
+      <uri>model://lamp_post</uri>
+      <pose frame=''>-5.0191 -4.01306 0 0 -0 2.05992</pose>
+    </include>
+    <include>
+      <name>mars_rover</name>
+      <uri>model://mars_rover</uri>
+      <pose frame=''>-0.93981 -4.02142 0 0 0 -2.8505</pose>
+    </include>
+
+    <actor name="actor">
+      <skin>
+        <filename>walk.dae</filename>
+        <scale>1.0</scale>
+      </skin>
+      <pose>3 -3 0 0 0 0</pose>
+      <animation name="walking">
+        <filename>walk.dae</filename>
+        <scale>1.000000</scale>
+        <interpolate_x>true</interpolate_x>
+      </animation>
+      <script>
+        <loop>true</loop>
+        <delay_start>0.000000</delay_start>
+        <auto_start>true</auto_start>
+        <trajectory id="0" type="walking">
+          <waypoint>
+            <time>0</time>
+            <pose>3 -3 0 0 0 0</pose>
+          </waypoint>
+          <waypoint>
+            <time>1</time>
+            <pose>3 -3 0 0 0 1.5708</pose>
+          </waypoint>
+          <waypoint>
+            <time>8</time>
+            <pose>3 3 0 0 0 1.5708</pose>
+          </waypoint>
+          <waypoint>
+            <time>9</time>
+            <pose>3 3 0 0 0 3.1416</pose>
+          </waypoint>
+          <waypoint>
+            <time>16</time>
+            <pose>-3 3 0 0 0 3.1416</pose>
+          </waypoint>
+          <waypoint>
+            <time>17</time>
+            <pose>-3 3 0 0 0 -1.5708</pose>
+          </waypoint>
+          <waypoint>
+            <time>24</time>
+            <pose>-3 -3 0 0 0 -1.5708</pose>
+          </waypoint>
+          <waypoint>
+            <time>25</time>
+            <pose>-3 -3 0 0 0 0</pose>
+          </waypoint>
+          <waypoint>
+            <time>32</time>
+            <pose>3 -3 0 0 0 0</pose>
+          </waypoint>
+        </trajectory>
+      </script>
+    </actor>
+
+    <plugin name="container_0" filename="libcamera_contains_plugin.so">
+      <updateRate>30</updateRate>
+      <visualize>true</visualize>
+      <trackedModels>[actor]</trackedModels>
+      <cameras>[camera_0, camera_1]</cameras>
+      <topic>gazebo/camera_select</topic>
+      <pose>3 0 1 0 0 0</pose>
+      <size>2 3 2</size>
+    </plugin>
+    <plugin name="container_1" filename="libcamera_contains_plugin.so">
+      <updateRate>30</updateRate>
+      <visualize>true</visualize>
+      <trackedModels>[actor]</trackedModels>
+      <cameras>[camera_1]</cameras>
+      <topic>gazebo/camera_select</topic>
+      <pose>0 2.75 1 0 0 0</pose>
+      <size>2 1.5 2</size>
+    </plugin>
+    <plugin name="container_2" filename="libcamera_contains_plugin.so">
+      <updateRate>30</updateRate>
+      <visualize>true</visualize>
+      <trackedModels>[actor]</trackedModels>
+      <cameras>[camera_3]</cameras>
+      <topic>gazebo/camera_select</topic>
+      <pose>-3 2.5 1 0 0 0</pose>
+      <size>2 2 2</size>
+    </plugin>
+    <plugin name="container_3" filename="libcamera_contains_plugin.so">
+      <updateRate>30</updateRate>
+      <visualize>true</visualize>
+      <trackedModels>[actor]</trackedModels>
+      <cameras>[camera_4, camera_2]</cameras>
+      <topic>gazebo/camera_select</topic>
+      <pose>-3 -0.5 1 0 0 0</pose>
+      <size>2 2 2</size>
+    </plugin>
+    <plugin name="container_4" filename="libcamera_contains_plugin.so">
+      <updateRate>30</updateRate>
+      <visualize>true</visualize>
+      <trackedModels>[actor]</trackedModels>
+      <cameras>[camera_2]</cameras>
+      <topic>gazebo/camera_select</topic>
+      <pose>0 -2.5 1 0 0 0</pose>
+      <size>3 2 2</size>
+    </plugin>
+
+    <plugin name="gvm_multicamera_bootstrapper_plugin" filename="libgvm_multicamera_bootstrapper_plugin.so">
+      <sensor name="video_monitor_dual_camera" type="gvm_multicamera">
+        <update_rate>30</update_rate>
+        <!-- Uncomment only to... -->
+        <always_on>true</always_on>
+        <visualize>true</visualize>
+        <!-- configure the camera poses -->
+
+        <camera name="camera_0">
+          <pose>0 0 3 1.5708 1.5708 0</pose>
+          <horizontal_fov>1.5708</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.01</near>
+            <far>100</far>
+          </clip>
+        </camera>
+
+        <camera name="camera_1">
+          <pose>-2.5 -0.5 2 0 0.55 -0.2</pose>
+          <horizontal_fov>0.523599</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.01</near>
+            <far>100</far>
+          </clip>
+        </camera>
+
+        <camera name="camera_2">
+          <pose>0 0 6 0.2 0.8 -1.42</pose>
+          <horizontal_fov>1.245647</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.01</near>
+            <far>100</far>
+          </clip>
+        </camera>
+
+        <camera name="camera_3">
+          <pose>0 0.2 0.56 0 0 -1.5708</pose>
+          <horizontal_fov>0.523599</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.01</near>
+            <far>100</far>
+          </clip>
+        </camera>
+
+        <camera name="camera_4">
+          <pose>-0.02 0.02 0.6 0 0 2.72</pose>
+          <horizontal_fov>0.523599</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.01</near>
+            <far>100</far>
+          </clip>
+        </camera>
+
+        <plugin name="multi_camera_monitor_plugin" filename="libgazebo_multi_camera_monitor_plugin.so">
+          <setCameraService>gazebo/set_camera</setCameraService>
+          <startRecordingService>gazebo/start_recording</startRecordingService>
+          <stopRecordingService>gazebo/stop_recording</stopRecordingService>
+          <cameraSelectTopic>gazebo/camera_select</cameraSelectTopic>
+          <savePath>/var/tmp/gazebo_multi_camera_monitor</savePath>
+          <recorder>
+            <width>640</width>
+            <height>480</height>
+            <bitRate>590000</bitRate>
+            <logMetadata>true</logMetadata>
+            <logWallTime>false</logWallTime>
+            <addTimestampInFilename>true</addTimestampInFilename>
+          </recorder>
+          <cameraReference name="camera_0">
+            <model>calibration_plane</model>
+            <link>link</link>
+          </cameraReference>
+          <cameraReference name="camera_1">
+            <model>brick_wall</model>
+            <link>chassis</link>
+          </cameraReference>
+          <cameraReference name="camera_2">
+            <model>lamp_post</model>
+            <link>link</link>
+          </cameraReference>
+          <cameraReference name="camera_3">
+            <model>mars_rover</model>
+            <link>link</link>
+          </cameraReference>
+          <cameraReference name="camera_4">
+            <model>cafe_table</model>
+            <link>link</link>
+          </cameraReference>
+        </plugin>
+      </sensor>
+
+      <sensorReference>
+        <model>ground_plane</model>
+        <link>link</link>
+      </sensorReference>
+    </plugin>
+
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose frame=''>5.18711 -5.89229 13.3163 0 1.0338 2.45536</pose>
+        <view_controller>orbit</view_controller>
+        <projection_type>perspective</projection_type>
+      </camera>
+    </gui>
+  </world>
+</sdf>

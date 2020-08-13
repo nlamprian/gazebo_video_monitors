@@ -66,7 +66,7 @@ class GZ_SENSORS_VISIBLE GvmMulticameraSensor : public Sensor {
     std::string getScopedName() const { return ns + "::" + getName(); }
 
     std::string getTopic() const {
-      std::string topic_name = getScopedName() + "/image";
+      std::string topic_name = "~/" + getScopedName() + "/image";
       common::replaceAll(topic_name, topic_name, "::", "/");
       common::replaceAll(topic_name, topic_name, " ", "_");
       return topic_name;

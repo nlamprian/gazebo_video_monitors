@@ -74,6 +74,7 @@ std::string GazeboVideoRecorder::stop(bool discard, std::string filename) {
   if (discard) {
     ROS_INFO_STREAM(logger_prefix_ << "Discarding active recording");
   } else {
+    if (filename.empty()) filename = "video";
     auto file = getPath(filename, add_timestamp_in_filename_);
     if (video_encoder_.SaveToFile(file)) {
       path = file;
