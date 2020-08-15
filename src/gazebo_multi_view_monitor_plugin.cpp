@@ -1,23 +1,22 @@
-#include <algorithm>
 #include <ctime>
 
-#include <gazebo_video_monitor_plugins/gazebo_multi_camera_monitor_plugin.h>
+#include <gazebo_video_monitor_plugins/gazebo_multi_view_monitor_plugin.h>
 #include <gazebo_video_monitor_plugins/internal/utils.h>
 
 namespace gazebo {
 
-GazeboMultiCameraMonitorPlugin::GazeboMultiCameraMonitorPlugin()
-    : GazeboMonitorBasePlugin(getClassName<GazeboMultiCameraMonitorPlugin>()) {
+GazeboMultiViewMonitorPlugin::GazeboMultiViewMonitorPlugin()
+    : GazeboMonitorBasePlugin(getClassName<GazeboMultiViewMonitorPlugin>()) {
   node_ = boost::make_shared<transport::Node>();
   node_->Init();
 }
 
-GazeboMultiCameraMonitorPlugin::~GazeboMultiCameraMonitorPlugin() {
+GazeboMultiViewMonitorPlugin::~GazeboMultiViewMonitorPlugin() {
   recorder_->reset();
 }
 
-void GazeboMultiCameraMonitorPlugin::Load(sensors::SensorPtr _sensor,
-                                          sdf::ElementPtr _sdf) {
+void GazeboMultiViewMonitorPlugin::Load(sensors::SensorPtr _sensor,
+                                        sdf::ElementPtr _sdf) {
   GazeboMonitorBasePlugin::Load(_sensor, _sdf);
 
   // Get recorder config
@@ -33,29 +32,28 @@ void GazeboMultiCameraMonitorPlugin::Load(sensors::SensorPtr _sensor,
   // Initialize cameras configuration
   for (size_t i = 0; i < names.size(); ++i)
     camera_name_to_index_map_[names[i]] = i;
-  camera_indices_.reserve(2);
-  camera_indices_.push_back(0);
+  camera_indices_ = std::vector<size_t>(4, std::numeric_limits<size_t>::max());
 
   // Initialize camera select gazebo subscriber
   camera_select_subscriber_ = node_->Subscribe(
       "~/" + sdf_->Get<std::string>("name") + "/camera_select",
-      &GazeboMultiCameraMonitorPlugin::cameraSelectCallback, this);
+      &GazeboMultiViewMonitorPlugin::cameraSelectCallback, this);
 
   // Initialize recorder
   recorder_ = std::make_shared<GazeboVideoRecorder>(
       static_cast<unsigned int>(sensor_->UpdateRate()),
-      getClassName<GazeboMultiCameraMonitorPlugin>());
+      getClassName<GazeboMultiViewMonitorPlugin>());
   if (not sdf_->HasElement("recorder"))
     gzthrow(logger_prefix_ + "Failed to get recorder");
   recorder_->load(world_, sdf_->GetElement("recorder"));
 }
 
-void GazeboMultiCameraMonitorPlugin::Reset() {
+void GazeboMultiViewMonitorPlugin::Reset() {
   std::lock_guard<std::mutex> lock(recorder_mutex_);
   if (sensor_->isRecording()) stopRecording(true);
 }
 
-void GazeboMultiCameraMonitorPlugin::initRos() {
+void GazeboMultiViewMonitorPlugin::initRos() {
   GazeboMonitorBasePlugin::initRos();
 
   // Get start recording service name
@@ -76,57 +74,50 @@ void GazeboMultiCameraMonitorPlugin::initRos() {
   // Initialize recording services
   start_recording_service_ = nh_->advertiseService(
       start_service_name,
-      &GazeboMultiCameraMonitorPlugin::startRecordingServiceCallback, this);
+      &GazeboMultiViewMonitorPlugin::startRecordingServiceCallback, this);
   stop_recording_service_ = nh_->advertiseService(
       stop_service_name,
-      &GazeboMultiCameraMonitorPlugin::stopRecordingServiceCallback, this);
+      &GazeboMultiViewMonitorPlugin::stopRecordingServiceCallback, this);
 
   // Initialize camera select subscriber
   camera_select_ros_subscriber_ = nh_->subscribe(
       camera_select_topic_name, 10,
-      &GazeboMultiCameraMonitorPlugin::cameraSelectRosCallback, this);
+      &GazeboMultiViewMonitorPlugin::cameraSelectRosCallback, this);
 }
 
-void GazeboMultiCameraMonitorPlugin::onNewImages(
+void GazeboMultiViewMonitorPlugin::onNewImages(
     const ImageDataPtrVector &images) {
   std::unique_lock<std::mutex> lock(recorder_mutex_, std::try_to_lock);
   if (not sensor_->isRecording() or not lock.owns_lock()) return;
 
-  if (camera_indices_.size() == 1)
-    recorder_->addFrame(images[camera_indices_[0]]);
-  else
-    recorder_->addFrame(images[camera_indices_[0]], images[camera_indices_[1]]);
+  recorder_->addMultiViewFrame(getImage(images, 0), getImage(images, 1),
+                               getImage(images, 2), getImage(images, 3));
 }
 
-void GazeboMultiCameraMonitorPlugin::cameraSelect(
+const GazeboMonitorBasePlugin::ImageDataPtrVector::value_type &
+GazeboMultiViewMonitorPlugin::getImage(
+    const GazeboMonitorBasePlugin::ImageDataPtrVector &images, size_t i) const {
+  return camera_indices_[i] == std::numeric_limits<size_t>::max()
+             ? image_null_
+             : images[camera_indices_[i]];
+}
+
+void GazeboMultiViewMonitorPlugin::cameraSelect(
     const std::vector<std::string> &names) {
-  if (std::any_of(names.begin(), names.end(), [&](const auto &name) {
-        return camera_name_to_index_map_.count(name) == 0;
-      })) {
+  if (names.size() > 4)
     ROS_WARN_STREAM(logger_prefix_
-                    << "Received message with invalid camera names; "
-                       "ignoring message");
-    return;
-  }
-
-  size_t num_names = names.size();
-  if (num_names > 2) {
-    ROS_WARN_STREAM(logger_prefix_
-                    << "Received message with more than 2 camera names; "
+                    << "Received message with more than 4 camera names; "
                        "ignoring the extra cameras");
-    num_names = 2;
-  } else if (num_names == 0) {
-    ROS_WARN_STREAM(logger_prefix_ << "Received message with 0 camera names; "
-                                   << "ignoring message");
-    return;
-  }
 
-  camera_indices_.clear();
-  for (size_t i = 0; i < num_names; ++i)
-    camera_indices_.push_back(camera_name_to_index_map_[names[i]]);
+  for (size_t i = 0; i < camera_indices_.size(); ++i) {
+    if (i < names.size() and camera_name_to_index_map_.count(names[i]) > 0)
+      camera_indices_[i] = camera_name_to_index_map_[names[i]];
+    else
+      camera_indices_[i] = std::numeric_limits<size_t>::max();
+  }
 }
 
-void GazeboMultiCameraMonitorPlugin::cameraSelectCallback(
+void GazeboMultiViewMonitorPlugin::cameraSelectCallback(
     const boost::shared_ptr<const ignition::msgs::StringMsg_V> &msg) {
   std::vector<std::string> names;
   for (int i = 0; i < msg->data_size(); ++i) names.push_back(msg->data(i));
@@ -134,19 +125,19 @@ void GazeboMultiCameraMonitorPlugin::cameraSelectCallback(
   cameraSelect(names);
 }
 
-void GazeboMultiCameraMonitorPlugin::cameraSelectRosCallback(
+void GazeboMultiViewMonitorPlugin::cameraSelectRosCallback(
     const gazebo_video_monitor_plugins::StringsConstPtr &msg) {
   std::lock_guard<std::mutex> lock(recorder_mutex_);
   cameraSelect(msg->names);
 }
 
-std::string GazeboMultiCameraMonitorPlugin::stopRecording(
-    bool discard, std::string filename) {
+std::string GazeboMultiViewMonitorPlugin::stopRecording(bool discard,
+                                                        std::string filename) {
   sensor_->setRecording(false);
   return recorder_->stop(discard, filename);
 }
 
-bool GazeboMultiCameraMonitorPlugin::startRecordingServiceCallback(
+bool GazeboMultiViewMonitorPlugin::startRecordingServiceCallback(
     gazebo_video_monitor_plugins::StartGmcmRecordingRequest &req,
     gazebo_video_monitor_plugins::StartGmcmRecordingResponse & /*res*/) {
   std::lock_guard<std::mutex> lock(recorder_mutex_);
@@ -159,7 +150,7 @@ bool GazeboMultiCameraMonitorPlugin::startRecordingServiceCallback(
   }
 
   // Select cameras
-  if (req.cameras.names.size() > 0) cameraSelect(req.cameras.names);
+  cameraSelect(req.cameras.names);
 
   // Start recording
   recorder_->start(save_path_, getStringTimestamp(std::time(nullptr)),
@@ -171,7 +162,7 @@ bool GazeboMultiCameraMonitorPlugin::startRecordingServiceCallback(
   return true;
 }
 
-bool GazeboMultiCameraMonitorPlugin::stopRecordingServiceCallback(
+bool GazeboMultiViewMonitorPlugin::stopRecordingServiceCallback(
     gazebo_video_monitor_plugins::StopRecordingRequest &req,
     gazebo_video_monitor_plugins::StopRecordingResponse &res) {
   if (not sensor_->isRecording()) {
@@ -186,6 +177,6 @@ bool GazeboMultiCameraMonitorPlugin::stopRecordingServiceCallback(
   return true;
 }
 
-GZ_REGISTER_SENSOR_PLUGIN(GazeboMultiCameraMonitorPlugin)
+GZ_REGISTER_SENSOR_PLUGIN(GazeboMultiViewMonitorPlugin)
 
 }  // namespace gazebo

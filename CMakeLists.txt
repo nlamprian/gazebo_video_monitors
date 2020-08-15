@@ -47,6 +47,7 @@ list(APPEND VIDEO_PLUGINS
   gazebo_video_monitor_plugin
   gazebo_multi_video_monitor_plugin
   gazebo_multi_camera_monitor_plugin
+  gazebo_multi_view_monitor_plugin
 )
 
 catkin_package(

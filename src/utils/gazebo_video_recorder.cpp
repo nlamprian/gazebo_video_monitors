@@ -10,15 +10,40 @@ namespace gazebo {
 GazeboVideoRecorder::GazeboVideoRecorder(unsigned int fps,
                                          const std::string &ns,
                                          const std::string &name)
-    : fps_(fps),
+    : logger_prefix_(ns + "::" + getClassName<GazeboVideoRecorder>()),
+      fps_(fps),
       log_metadata_(false),
       log_wall_time_(false),
       add_timestamp_in_filename_(true) {
-  logger_prefix_ = ns + "::" + getClassName<GazeboVideoRecorder>();
-  if (name.empty())
-    logger_prefix_ += ": ";
-  else
-    logger_prefix_ += "[" + name + "]: ";
+  logger_prefix_ += name.empty() ? (": ") : ("[" + name + "]: ");
+
+  // Initialize regions of interest
+  roi_map_[WindowType::BOTTOM_RIGHT_CORNER] = [](int width, int height) {
+    int window_width = static_cast<int>(0.3 * width);
+    int window_height = static_cast<int>(0.3 * height);
+    return cv::Rect(width - window_width - 10, height - window_height - 10,
+                    window_width, window_height);
+  };
+  roi_map_[WindowType::TOP_LEFT_QUADRANT] = [](int width, int height) {
+    int window_width = static_cast<int>(0.5 * width);
+    int window_height = static_cast<int>(0.5 * height);
+    return cv::Rect(0, 0, window_width, window_height);
+  };
+  roi_map_[WindowType::TOP_RIGHT_QUADRANT] = [](int width, int height) {
+    int window_width = static_cast<int>(0.5 * width);
+    int window_height = static_cast<int>(0.5 * height);
+    return cv::Rect(width / 2, 0, window_width, window_height);
+  };
+  roi_map_[WindowType::BOTTOM_LEFT_QUADRANT] = [](int width, int height) {
+    int window_width = static_cast<int>(0.5 * width);
+    int window_height = static_cast<int>(0.5 * height);
+    return cv::Rect(0, height / 2, window_width, window_height);
+  };
+  roi_map_[WindowType::BOTTOM_RIGHT_QUADRANT] = [](int width, int height) {
+    int window_width = static_cast<int>(0.5 * width);
+    int window_height = static_cast<int>(0.5 * height);
+    return cv::Rect(width / 2, height / 2, window_width, window_height);
+  };
 }
 
 GazeboVideoRecorder::~GazeboVideoRecorder() { video_encoder_.Reset(); }
@@ -96,7 +121,7 @@ void GazeboVideoRecorder::addFrame(
 
   if (data_window) {
     cv::Mat image_window = toCvMat(data_window);
-    writeWindow(image_main, image_window);
+    writeWindow(image_main, image_window, WindowType::BOTTOM_RIGHT_CORNER);
   }
   if (log_metadata_) {
     writeMetadata(image_main);
@@ -105,6 +130,39 @@ void GazeboVideoRecorder::addFrame(
   // cv::namedWindow(logger_prefix_ + "Recording", cv::WINDOW_AUTOSIZE);
   // cv::imshow(logger_prefix_ + "Recording", image_main);
   // cv::waitKey(1);
+
+  cv::cvtColor(image_main, image_main, cv::COLOR_RGB2BGR);
+  video_encoder_.AddFrame(image_main.data, static_cast<uint>(image_main.cols),
+                          static_cast<uint>(image_main.rows));
+}
+
+void GazeboVideoRecorder::addMultiViewFrame(
+    const sensors::GvmMulticameraSensor::ImageDataPtr &data_tl,
+    const sensors::GvmMulticameraSensor::ImageDataPtr &data_tr,
+    const sensors::GvmMulticameraSensor::ImageDataPtr &data_bl,
+    const sensors::GvmMulticameraSensor::ImageDataPtr &data_br) {
+  cv::Mat image_main(static_cast<int>(height_), static_cast<int>(width_),
+                     CV_8UC3, cv::Scalar(0));
+
+  if (data_tl) {
+    cv::Mat image_tl = toCvMat(data_tl);
+    writeWindow(image_main, image_tl, WindowType::TOP_LEFT_QUADRANT);
+  }
+  if (data_tr) {
+    cv::Mat image_tr = toCvMat(data_tr);
+    writeWindow(image_main, image_tr, WindowType::TOP_RIGHT_QUADRANT);
+  }
+  if (data_bl) {
+    cv::Mat image_bl = toCvMat(data_bl);
+    writeWindow(image_main, image_bl, WindowType::BOTTOM_LEFT_QUADRANT);
+  }
+  if (data_br) {
+    cv::Mat image_br = toCvMat(data_br);
+    writeWindow(image_main, image_br, WindowType::BOTTOM_RIGHT_QUADRANT);
+  }
+  if (log_metadata_) {
+    writeMetadata(image_main);
+  }
 
   cv::cvtColor(image_main, image_main, cv::COLOR_RGB2BGR);
   video_encoder_.AddFrame(image_main.data, static_cast<uint>(image_main.cols),
@@ -126,22 +184,17 @@ cv::Mat GazeboVideoRecorder::toCvMat(
 }
 
 void GazeboVideoRecorder::writeWindow(cv::Mat &image_main,
-                                      cv::Mat &image_window) {
-  // Make the window image 1/3 of the main image and place the
-  // window image in the bottom right corner of the main image
-  int window_width = static_cast<int>(0.3 * image_main.cols);
-  int window_height = static_cast<int>(0.3 * image_main.rows);
-  cv::Rect roi(image_main.cols - window_width - 10,
-               image_main.rows - window_height - 10, window_width,
-               window_height);
+                                      cv::Mat &image_window, WindowType type) {
+  cv::Rect roi = roi_map_[type](image_main.cols, image_main.rows);
+  cv::Rect window_roi(roi.x + 1, roi.y + 1, roi.width - 2, roi.height - 2);
 
   // Create a frame around the window image
-  cv::Rect frame_roi(roi.x - 1, roi.y - 1, roi.width + 2, roi.height + 2);
-  image_main(frame_roi).setTo(cv::Scalar(0, 0, 0));
+  image_main(roi).setTo(cv::Scalar(0, 0, 0));
 
   // Write window image on the main image
-  cv::Mat window = image_main(roi);
-  cv::resize(image_window, image_window, cv::Size(window_width, window_height));
+  cv::Mat window = image_main(window_roi);
+  cv::resize(image_window, image_window,
+             cv::Size(window_roi.width, window_roi.height));
   image_window.copyTo(window);
 }
 

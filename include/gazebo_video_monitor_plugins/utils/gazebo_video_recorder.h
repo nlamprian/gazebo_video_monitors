@@ -1,6 +1,9 @@
 #ifndef GAZEBO_VIDEO_MONITOR_PLUGINS_UTILS_GAZEBO_VIDEO_RECORDER_H
 #define GAZEBO_VIDEO_MONITOR_PLUGINS_UTILS_GAZEBO_VIDEO_RECORDER_H
 
+#include <functional>
+#include <unordered_map>
+
 #include <boost/filesystem/operations.hpp>
 #include <boost/uuid/random_generator.hpp>
 
@@ -16,8 +19,10 @@ namespace gazebo {
 
 /**
  * @brief Supports creating video recordings from a series of frames.
- * @details Features picture-in-picture for a second view and logging of time
- * metadata in the video recording.
+ * @details Apart from the simple camera stream, it features:
+ *   - picture-in-picture mode for a second camera stream on top of the main one
+ *   - quadrant mode with 4 camera streams shown in parallel next to each other
+ *   - logging of time metadata
  * @note Expects the following configuration:
  *   - width: width of the video recording
  *   - height: height of the video recording
@@ -31,6 +36,14 @@ namespace gazebo {
  *     recording
  */
 class GazeboVideoRecorder {
+  enum class WindowType : uint8_t {
+    BOTTOM_RIGHT_CORNER,
+    TOP_LEFT_QUADRANT,
+    TOP_RIGHT_QUADRANT,
+    BOTTOM_LEFT_QUADRANT,
+    BOTTOM_RIGHT_QUADRANT
+  };
+
  public:
   GazeboVideoRecorder(unsigned int fps, const std::string &ns,
                       const std::string &name = "");
@@ -44,12 +57,17 @@ class GazeboVideoRecorder {
   void addFrame(
       const sensors::GvmMulticameraSensor::ImageDataPtr &data_main,
       const sensors::GvmMulticameraSensor::ImageDataPtr &data_window = nullptr);
+  void addMultiViewFrame(
+      const sensors::GvmMulticameraSensor::ImageDataPtr &data_tl = nullptr,
+      const sensors::GvmMulticameraSensor::ImageDataPtr &data_tr = nullptr,
+      const sensors::GvmMulticameraSensor::ImageDataPtr &data_bl = nullptr,
+      const sensors::GvmMulticameraSensor::ImageDataPtr &data_br = nullptr);
 
  private:
   std::string getPath(std::string filename, bool add_timestamp = false);
   cv::Mat toCvMat(
       const sensors::GvmMulticameraSensor::ImageDataPtr &data) const;
-  void writeWindow(cv::Mat &image_main, cv::Mat &image_window);
+  void writeWindow(cv::Mat &image_main, cv::Mat &image_window, WindowType type);
   void writeMetadata(cv::Mat &image);
 
   std::string logger_prefix_;
@@ -63,6 +81,8 @@ class GazeboVideoRecorder {
   bool log_metadata_;
   bool log_wall_time_;
   bool add_timestamp_in_filename_;
+
+  std::unordered_map<WindowType, std::function<cv::Rect(int, int)>> roi_map_;
 
   common::VideoEncoder video_encoder_;
   boost::filesystem::path save_path_;

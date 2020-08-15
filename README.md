@@ -3,7 +3,7 @@ gazebo_video_monitor_plugins
 
 gazebo_video_monitor_plugins provides a gazebo multicamera sensor that can be used for creating different types of videos with multiple views into the gazebo world.
 
-There are currently three plugins in the package which are explained next. More plugins can be developed, with minimal effort, to fit arbitrary use cases.
+There are currently four plugins in the package which are explained next. More plugins can be developed, with minimal effort, to fit arbitrary use cases.
 
 GazeboVideoMonitorPlugin
 ---
@@ -12,7 +12,7 @@ The GazeboVideoMonitorPlugin plugin records videos in the following format.
 
 ![video-monitor-plugin](assets/video-monitor-plugin.png)
 
-It assumes two cameras: one which can be used to get a view of the world, and another one which can be attached to a robot to get a view from its perspective. Additionally, time metadata are logged in the video to make tracking of world and robot events easier. To configure the plugin, see the [gazebo_video_monitor_plugin.world](test/worlds/gazebo_video_monitor_plugin.world) file. The plugin exposes two ROS services to control the recordings:
+It assumes two cameras: one which can be used to get a view of the world, and another one which can be attached to a robot to get a view from its perspective. Additionally, time metadata are logged in the video to make tracking of world and robot events easier. To configure the plugin, see the [gazebo_video_monitor_plugin.world](test/worlds/gazebo_video_monitor_plugin.world#L77) file. The plugin exposes two ROS services to control the recordings:
 
 * Use the start_recording service to initiate a recording. Setting disable_window to true removes the second view from the recording. world_as_main_view can be used to set the world or robot camera as the main view of the recording.
 
@@ -33,7 +33,7 @@ The GazeboMultiVideoMonitorPlugin plugin records multiple videos from different 
 
 ![multi-video-monitor-plugin](assets/multi-video-monitor-plugin.gif)
 
-An arbitrary number of cameras can be set up, which the plugin will read and record a video for each one of them. Time metadata can be logged in the videos as well. To configure the plugin, see the [gazebo_multi_video_monitor_plugin.world](test/worlds/gazebo_multi_video_monitor_plugin.world) file. The plugin exposes two ROS services to control the recordings:
+An arbitrary number of cameras can be set up, which the plugin will read and record a video for each one of them. Time metadata can be logged in the videos as well. To configure the plugin, see the [gazebo_multi_video_monitor_plugin.world](test/worlds/gazebo_multi_video_monitor_plugin.world#L122) file. The plugin exposes two ROS services to control the recordings:
 
 * Use the start_recording service to initiate a recording. There are no arguments.
 
@@ -46,7 +46,7 @@ The GazeboMultiCameraMonitorPlugin plugin records videos with a multi-camera set
 
 ![multi-camera-monitor-plugin](assets/multi-camera-monitor-plugin.gif)
 
-An arbitrary number of cameras can be set up, from which the plugin can select and configure the video stream. The cameras can be updated dynamically during the recording. Time metadata can be logged in the videos as well. To configure the plugin, see the [gazebo_multi_camera_monitor_plugin.world](test/worlds/gazebo_multi_camera_monitor_plugin.world) file. The plugin exposes two ROS services and one topic to control the recordings:
+An arbitrary number of cameras can be set up, from which the plugin can select and configure the video stream. The cameras can be updated dynamically during the recording. Time metadata can be logged in the videos as well. To configure the plugin, see the [gazebo_multi_camera_monitor_plugin.world](test/worlds/gazebo_multi_camera_monitor_plugin.world#L168) file. The plugin exposes two ROS services and one topic to control the recordings:
 
 * Use the start_recording service to initiate a recording. You can optionally specify the cameras with which to initialize the video stream.
 
@@ -60,6 +60,29 @@ rosservice call /gazebo/start_recording "{cameras: {names: []}}"
 
 ```bash
 rostopic pub /gazebo/camera_select gazebo_video_monitor_plugins/Strings "{names: [camera_0, camera_2]}"
+```
+
+GazeboMultiViewMonitorPlugin
+---
+
+The GazeboMultiViewMonitorPlugin plugin records videos with up to 4 parallel camera streams.
+
+![multi-view-monitor-plugin](assets/multi-view-monitor-plugin.gif)
+
+An arbitrary number of cameras can be set up, from which the plugin can select and configure the video stream. The cameras can be updated dynamically during the recording. Time metadata can be logged in the videos as well. To configure the plugin, see the [gazebo_multi_view_monitor_plugin.world](test/worlds/gazebo_multi_view_monitor_plugin.world#L168) file. The plugin exposes two ROS services and one topic to control the recordings:
+
+* Use the start_recording service to initiate a recording. You can pass as arguments the cameras with which to initialize the video stream. An empty camera name results in a null camera stream in the respective quadrant.
+
+```bash
+rosservice call /gazebo/start_recording "{cameras: {names: ['', camera_1, camera_2, '']}}"
+```
+
+* Use the stop_recording service to save or discard a recording, as explained in [GazeboVideoMonitorPlugin](#gazebovideomonitorplugin).
+
+* Publish a message to the camera_select topic to update the video stream. You can specify up to 4 cameras for the top left, top right, bottom left, and bottom right quadrant, respectively. A camera name can be left empty to disable the respective quadrant.
+
+```bash
+rostopic pub /gazebo/camera_select gazebo_video_monitor_plugins/Strings "{names: [camera_3, camera_1, '', camera_2]}"
 ```
 
 Camera Configuration
