@@ -2,6 +2,10 @@
 Changelog for package gazebo_video_monitor_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.4.1 (2020-08-21)
+-----------
+* Fix cmake and compiler warnings
+
 0.4.0 (2020-08-15)
 -----------
 * Add multi view monitor plugin
