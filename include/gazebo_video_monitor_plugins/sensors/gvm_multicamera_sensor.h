@@ -160,7 +160,7 @@ class GZ_SENSORS_VISIBLE GvmMulticameraSensor : public Sensor {
       publisher->Publish(msg);
     }
 
-    bool attachToLink(const physics::LinkPtr &link, bool on_init = false) {
+    void attachToLink(const physics::LinkPtr &link, bool on_init = false) {
       setParent(link);
       // HACK When attachToLink is called during initialization, SetWorldPose
       // must take the local pose for the camera world pose to be set correctly
@@ -171,7 +171,7 @@ class GZ_SENSORS_VISIBLE GvmMulticameraSensor : public Sensor {
       camera->AttachToVisual(parent_id, true);
     }
 
-    bool attachToLink(const physics::LinkPtr &link,
+    void attachToLink(const physics::LinkPtr &link,
                       const ignition::math::Pose3d &camera_pose,
                       bool on_init = false) {
       relative_pose = camera_pose;
