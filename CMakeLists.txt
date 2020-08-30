@@ -4,7 +4,7 @@ project(gazebo_video_monitor_plugins)
 
 cmake_policy(SET CMP0054 NEW)
 
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 
 find_package(catkin REQUIRED
   COMPONENTS
