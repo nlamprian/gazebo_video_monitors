@@ -2,6 +2,10 @@
 Changelog for package gazebo_video_monitor_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.4.2 (2020-08-30)
+-----------
+* Enable C++14
+
 0.4.1 (2020-08-21)
 -----------
 * Fix cmake and compiler warnings
