@@ -108,9 +108,9 @@ void CameraContainsPlugin::onUpdate(const common::UpdateInfo &info) {
   if (info.simTime - last_update_time_ < update_period_) return;
   last_update_time_ = info.simTime;
 
-  bool contains_model =
-      std::any_of(tracked_models_.begin(), tracked_models_.end(),
-                  [&](const auto &name) -> bool { return contains(name); });
+  bool contains_model = std::any_of(
+      tracked_models_.begin(), tracked_models_.end(),
+      [&](const auto &name) -> bool { return this->contains(name); });
 
   if (contains_model) {
     if (not contains_model_) {
