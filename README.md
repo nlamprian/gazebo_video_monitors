@@ -1,9 +1,9 @@
 gazebo_video_monitor_plugins
 ---
 
-gazebo_video_monitor_plugins provides a gazebo multicamera sensor that can be used for creating different types of videos with multiple views into the gazebo world.
+gazebo_video_monitor_plugins is a package that lets the user record videos of a [Gazebo](http://gazebosim.org/) simulation. It provides a multicamera sensor that can be used for creating different types of videos with multiple views from inside the gazebo world.
 
-There are currently four plugins in the package which are explained next. More plugins can be developed, with minimal effort, to fit arbitrary use cases.
+There is a number of plugins available in the package which are explained next. More plugins can be developed, with minimal effort, to fit arbitrary use cases.
 
 GazeboVideoMonitorPlugin
 ---

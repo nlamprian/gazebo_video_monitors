@@ -2,7 +2,9 @@
 <package format="2">
   <name>gazebo_video_monitor_plugins</name>
   <version>0.5.0</version>
-  <description>The gazebo_video_monitor_plugins package</description>
+  <description>
+    gazebo_video_monitor_plugins is a package that lets the user record videos of a [Gazebo](http://gazebosim.org/) simulation. It provides a multicamera sensor that can be used for creating different types of videos with multiple views from inside the gazebo world. There is a number of plugins available in the package, but more can be developed by the user, with minimal effort, to fit arbitrary use cases.
+  </description>
 
   <author email="nlamprian@gmail.com">Nick Lamprianidis</author>
   <maintainer email="nlamprian@gmail.com">Nick Lamprianidis</maintainer>
