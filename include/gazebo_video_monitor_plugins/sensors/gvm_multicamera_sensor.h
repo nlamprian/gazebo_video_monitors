@@ -90,7 +90,11 @@ class GZ_SENSORS_VISIBLE GvmMulticameraSensor : public Sensor {
     }
 
     ignition::math::Pose3d getWorldPose() const {
+#if GAZEBO_MAJOR_VERSION > 10
+      return parent_link->WorldPose() * relative_pose;
+#else
       return relative_pose * parent_link->WorldPose();
+#endif
     }
 
     void setParent(const physics::LinkPtr &link) {
