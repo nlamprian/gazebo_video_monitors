@@ -2,16 +2,23 @@
 Changelog for package gazebo_video_monitor_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.0 (2020-09-27)
+------------------
+* Address gcc lambda bug
+* Fix logs
+* Fix pose multiplications for noetic
+  Issue: https://osrf-migration.github.io/ignition-gh-pages/#!/ignitionrobotics/ign-math/pull-requests/301/page/1
+
 0.4.2 (2020-08-30)
------------
+------------------
 * Enable C++14
 
 0.4.1 (2020-08-21)
------------
+------------------
 * Fix cmake and compiler warnings
 
 0.4.0 (2020-08-15)
------------
+------------------
 * Add multi view monitor plugin
   Support quadrant camera streams in the video recorder
 * Add license notice
