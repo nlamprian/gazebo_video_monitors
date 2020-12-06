@@ -74,7 +74,7 @@ void CameraContainsPlugin::Load(physics::WorldPtr _world,
   // Initialize publisher
   if (not _sdf->HasElement("topic"))
     gzthrow(logger_prefix_ + "Failed to get topic");
-  publisher_ = nh_->advertise<gazebo_video_monitor_plugins::Strings>(
+  publisher_ = nh_->advertise<gazebo_video_monitor_msgs::Strings>(
       _sdf->Get<std::string>("topic"), 10);
   msg_.names = cameras_;
 

@@ -95,8 +95,8 @@ std::string GazeboVideoMonitorPlugin::stopRecording(bool discard,
 }
 
 bool GazeboVideoMonitorPlugin::startRecordingServiceCallback(
-    gazebo_video_monitor_plugins::StartGvmRecordingRequest &req,
-    gazebo_video_monitor_plugins::StartGvmRecordingResponse & /*res*/) {
+    gazebo_video_monitor_msgs::StartGvmRecordingRequest &req,
+    gazebo_video_monitor_msgs::StartGvmRecordingResponse & /*res*/) {
   std::lock_guard<std::mutex> lock(recorder_mutex_);
 
   // Stop active recording
@@ -119,8 +119,8 @@ bool GazeboVideoMonitorPlugin::startRecordingServiceCallback(
 }
 
 bool GazeboVideoMonitorPlugin::stopRecordingServiceCallback(
-    gazebo_video_monitor_plugins::StopRecordingRequest &req,
-    gazebo_video_monitor_plugins::StopRecordingResponse &res) {
+    gazebo_video_monitor_msgs::StopRecordingRequest &req,
+    gazebo_video_monitor_msgs::StopRecordingResponse &res) {
   if (not sensor_->isRecording()) {
     ROS_WARN_STREAM(logger_prefix_ << "No active recording; ignoring request");
     res.success = false;

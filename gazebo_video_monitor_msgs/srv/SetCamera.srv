@@ -1,0 +1,7 @@
+string camera_name                   # Name of the camera (as given in the SDF description)
+string model_name                    # Name of the model with which to associate the camera. If empty, the camera is attached to the world model (see multicamera bootstrapper)
+string link_name                     # Name of the link to which to attach the camera
+gazebo_video_monitor_msgs/Pose pose  # Pose relative to the parent link
+---
+string message
+bool success

@@ -25,8 +25,8 @@
 
 #include <gazebo/common/Plugin.hh>
 
-#include <gazebo_video_monitor_plugins/StartGvmRecording.h>
-#include <gazebo_video_monitor_plugins/StopRecording.h>
+#include <gazebo_video_monitor_msgs/StartGvmRecording.h>
+#include <gazebo_video_monitor_msgs/StopRecording.h>
 #include <gazebo_video_monitor_plugins/gazebo_monitor_base_plugin.h>
 #include <gazebo_video_monitor_plugins/utils/gazebo_video_recorder.h>
 
@@ -64,11 +64,11 @@ class GazeboVideoMonitorPlugin : public GazeboMonitorBasePlugin {
   virtual void onNewImages(const ImageDataPtrVector &images) override;
   std::string stopRecording(bool discard, std::string filename = "");
   bool startRecordingServiceCallback(
-      gazebo_video_monitor_plugins::StartGvmRecordingRequest &req,
-      gazebo_video_monitor_plugins::StartGvmRecordingResponse &res);
+      gazebo_video_monitor_msgs::StartGvmRecordingRequest &req,
+      gazebo_video_monitor_msgs::StartGvmRecordingResponse &res);
   bool stopRecordingServiceCallback(
-      gazebo_video_monitor_plugins::StopRecordingRequest &req,
-      gazebo_video_monitor_plugins::StopRecordingResponse &res);
+      gazebo_video_monitor_msgs::StopRecordingRequest &req,
+      gazebo_video_monitor_msgs::StopRecordingResponse &res);
 
   const std::vector<std::string> camera_names_;
 

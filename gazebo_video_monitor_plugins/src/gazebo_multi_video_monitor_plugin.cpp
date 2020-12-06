@@ -133,8 +133,8 @@ bool GazeboMultiVideoMonitorPlugin::startRecordingServiceCallback(
 }
 
 bool GazeboMultiVideoMonitorPlugin::stopRecordingServiceCallback(
-    gazebo_video_monitor_plugins::StopRecordingRequest &req,
-    gazebo_video_monitor_plugins::StopRecordingResponse &res) {
+    gazebo_video_monitor_msgs::StopRecordingRequest &req,
+    gazebo_video_monitor_msgs::StopRecordingResponse &res) {
   if (not sensor_->isRecording()) {
     ROS_WARN_STREAM(logger_prefix_ << "No active recording; ignoring request");
     res.success = false;

@@ -1,7 +1,7 @@
-gazebo_video_monitor_plugins
+gazebo_video_monitors
 ---
 
-gazebo_video_monitor_plugins is a package that lets the user record videos of a [Gazebo](http://gazebosim.org/) simulation. It provides a multicamera sensor that can be used for creating different types of videos with multiple views from inside the gazebo world.
+gazebo_video_monitors contains packages that lets the user record videos of a [Gazebo](http://gazebosim.org/) simulation. It provides a multicamera sensor that can be used for creating different types of videos with multiple views from inside the gazebo world.
 
 There is a number of plugins available in the package which are explained next. More plugins can be developed, with minimal effort, to fit arbitrary use cases.
 
@@ -59,7 +59,7 @@ rosservice call /gazebo/start_recording "{cameras: {names: []}}"
 * Publish a message to the camera_select topic to update the video stream. You can specify one or two cameras for the main and window view, respectively.
 
 ```bash
-rostopic pub /gazebo/camera_select gazebo_video_monitor_plugins/Strings "{names: [camera_0, camera_2]}"
+rostopic pub /gazebo/camera_select gazebo_video_monitor_msgs/Strings "{names: [camera_0, camera_2]}"
 ```
 
 GazeboMultiViewMonitorPlugin
@@ -82,7 +82,7 @@ rosservice call /gazebo/start_recording "{cameras: {names: ['', camera_1, camera
 * Publish a message to the camera_select topic to update the video stream. You can specify up to 4 cameras for the top left, top right, bottom left, and bottom right quadrant, respectively. A camera name can be left empty to disable the respective quadrant.
 
 ```bash
-rostopic pub /gazebo/camera_select gazebo_video_monitor_plugins/Strings "{names: [camera_3, camera_1, '', camera_2]}"
+rostopic pub /gazebo/camera_select gazebo_video_monitor_msgs/Strings "{names: [camera_3, camera_1, '', camera_2]}"
 ```
 
 Camera Configuration

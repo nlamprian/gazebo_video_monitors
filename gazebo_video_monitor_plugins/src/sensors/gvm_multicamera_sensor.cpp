@@ -286,8 +286,8 @@ bool GvmMulticameraSensor::UpdateImpl(const bool /*force*/) {
 }
 
 bool GvmMulticameraSensor::setCameraServiceCallback(
-    gazebo_video_monitor_plugins::SetCameraRequest &req,
-    gazebo_video_monitor_plugins::SetCameraResponse &res) {
+    gazebo_video_monitor_msgs::SetCameraRequest &req,
+    gazebo_video_monitor_msgs::SetCameraResponse &res) {
   if (cameras_.count(req.camera_name) == 0) {
     res.message = "Requested camera does not exist";
     res.success = false;

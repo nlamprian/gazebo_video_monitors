@@ -26,7 +26,7 @@
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/physics/physics.hh>
 
-#include <gazebo_video_monitor_plugins/Strings.h>
+#include <gazebo_video_monitor_msgs/Strings.h>
 #include <gazebo_video_monitor_plugins/utils/box_marker_visualizer.h>
 
 namespace gazebo {
@@ -67,7 +67,7 @@ class CameraContainsPlugin : public WorldPlugin {
   ros::AsyncSpinner spinner_;
 
   ros::Publisher publisher_;
-  gazebo_video_monitor_plugins::Strings msg_;
+  gazebo_video_monitor_msgs::Strings msg_;
   bool contains_model_;
 
   BoxMarkerVisualizerPtr container_visualizer_;

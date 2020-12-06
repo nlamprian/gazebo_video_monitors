@@ -32,7 +32,7 @@
 #include <gazebo/sensors/Sensor.hh>
 #include <gazebo/util/system.hh>
 
-#include <gazebo_video_monitor_plugins/SetCamera.h>
+#include <gazebo_video_monitor_msgs/SetCamera.h>
 #include <gazebo_video_monitor_plugins/internal/types.h>
 
 namespace gazebo {
@@ -221,8 +221,8 @@ class GZ_SENSORS_VISIBLE GvmMulticameraSensor : public Sensor {
   void Render();
   virtual bool UpdateImpl(const bool force) override;
   bool setCameraServiceCallback(
-      gazebo_video_monitor_plugins::SetCameraRequest &req,
-      gazebo_video_monitor_plugins::SetCameraResponse &res);
+      gazebo_video_monitor_msgs::SetCameraRequest &req,
+      gazebo_video_monitor_msgs::SetCameraResponse &res);
 
   physics::LinkPtr link_;
 

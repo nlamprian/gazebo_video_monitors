@@ -28,9 +28,9 @@
 #include <ignition/msgs/stringmsg_v.pb.h>
 #include <gazebo/common/Plugin.hh>
 
-#include <gazebo_video_monitor_plugins/StartGmcmRecording.h>
-#include <gazebo_video_monitor_plugins/StopRecording.h>
-#include <gazebo_video_monitor_plugins/Strings.h>
+#include <gazebo_video_monitor_msgs/StartGmcmRecording.h>
+#include <gazebo_video_monitor_msgs/StopRecording.h>
+#include <gazebo_video_monitor_msgs/Strings.h>
 #include <gazebo_video_monitor_plugins/gazebo_monitor_base_plugin.h>
 #include <gazebo_video_monitor_plugins/utils/gazebo_video_recorder.h>
 
@@ -73,14 +73,14 @@ class GazeboMultiCameraMonitorPlugin : public GazeboMonitorBasePlugin {
   void cameraSelectCallback(
       const boost::shared_ptr<const ignition::msgs::StringMsg_V> &msg);
   void cameraSelectRosCallback(
-      const gazebo_video_monitor_plugins::StringsConstPtr &msg);
+      const gazebo_video_monitor_msgs::StringsConstPtr &msg);
   std::string stopRecording(bool discard, std::string filename = "");
   bool startRecordingServiceCallback(
-      gazebo_video_monitor_plugins::StartGmcmRecordingRequest &req,
-      gazebo_video_monitor_plugins::StartGmcmRecordingResponse &res);
+      gazebo_video_monitor_msgs::StartGmcmRecordingRequest &req,
+      gazebo_video_monitor_msgs::StartGmcmRecordingResponse &res);
   bool stopRecordingServiceCallback(
-      gazebo_video_monitor_plugins::StopRecordingRequest &req,
-      gazebo_video_monitor_plugins::StopRecordingResponse &res);
+      gazebo_video_monitor_msgs::StopRecordingRequest &req,
+      gazebo_video_monitor_msgs::StopRecordingResponse &res);
 
   transport::NodePtr node_;
   transport::SubscriberPtr camera_select_subscriber_;

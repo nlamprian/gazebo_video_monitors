@@ -28,7 +28,7 @@
 
 #include <gazebo/common/Plugin.hh>
 
-#include <gazebo_video_monitor_plugins/StopRecording.h>
+#include <gazebo_video_monitor_msgs/StopRecording.h>
 #include <gazebo_video_monitor_plugins/gazebo_monitor_base_plugin.h>
 #include <gazebo_video_monitor_plugins/utils/gazebo_video_recorder.h>
 
@@ -70,8 +70,8 @@ class GazeboMultiVideoMonitorPlugin : public GazeboMonitorBasePlugin {
   bool startRecordingServiceCallback(std_srvs::EmptyRequest &req,
                                      std_srvs::EmptyResponse &res);
   bool stopRecordingServiceCallback(
-      gazebo_video_monitor_plugins::StopRecordingRequest &req,
-      gazebo_video_monitor_plugins::StopRecordingResponse &res);
+      gazebo_video_monitor_msgs::StopRecordingRequest &req,
+      gazebo_video_monitor_msgs::StopRecordingResponse &res);
 
   std::unordered_map<std::string, GazeboVideoRecorderPtr> recorders_;
   std::mutex recorders_mutex_;
