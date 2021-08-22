@@ -11,12 +11,7 @@ catkin_python_setup()
 ## catkin specific configuration ##
 ###################################
 
-catkin_package(
-  CATKIN_DEPENDS
-    gazebo_msgs
-    rospy
-    std_srvs
-)
+catkin_package()
 
 #############
 ## Install ##
