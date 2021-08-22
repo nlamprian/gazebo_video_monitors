@@ -104,5 +104,6 @@ A set of utility plugins is also available to be used along with the monitor plu
 Known Issues
 ------------
 
-* The camera visualizations (not the cameras used for recording) are created and set correctly, but they don't get attached to the models.
-* The cameras are not always moved correctly during initialization. The numberOfInitialAttachRetries parameter was introduced as a temporary fix.
+* The camera visualizations (not the cameras used for the recordings) are created and set correctly, but they don't get attached to the models.
+* The cameras are not always positioned correctly during initialization. The [numberOfInitialAttachRetries](gazebo_video_monitor_plugins/include/gazebo_video_monitor_plugins/gazebo_monitor_base_plugin.h#L43) parameter was introduced as a temporary fix.
+* Gazebo may or may not crash upon launch if your robot has ray sensors (somehow creating the scene early makes collision detection explode; your guess is as good as mine). The [initService](gazebo_video_monitor_plugins/include/gazebo_video_monitor_plugins/gvm_multicamera_bootstrapper_plugin.h#L38) parameter was introduced to trigger the initialization of the plugin by calling a service at the right moment (e.g. after your robot has been initialized).

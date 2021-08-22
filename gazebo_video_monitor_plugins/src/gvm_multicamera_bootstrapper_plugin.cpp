@@ -23,13 +23,19 @@
 namespace gazebo {
 
 GvmMulticameraBootstrapperPlugin::GvmMulticameraBootstrapperPlugin()
-    : logger_prefix_(getClassName<GvmMulticameraBootstrapperPlugin>() + ": ") {
+    : logger_prefix_(getClassName<GvmMulticameraBootstrapperPlugin>() + ": "),
+      spinner_(1, &callback_queue_),
+      inited_(false) {
   sensors::SensorFactory::RegisterSensor(
       "gvm_multicamera", reinterpret_cast<sensors::SensorFactoryFn>(
                              &sensors::GvmMulticameraSensor::newSensor));
 }
 
 GvmMulticameraBootstrapperPlugin::~GvmMulticameraBootstrapperPlugin() {
+  callback_queue_.clear();
+  callback_queue_.disable();
+  nh_->shutdown();
+
   if (not link_) return;
   std::string scoped_sensor_name =
       world_->Name() + "::" + link_->GetScopedName() +
@@ -51,8 +57,7 @@ void GvmMulticameraBootstrapperPlugin::Load(physics::WorldPtr _world,
   // Load sensor model configuration
   if (not _sdf->HasElement("sensorReference"))
     gzthrow(logger_prefix_ + "Failed to get sensorReference");
-  auto model_config =
-      parseRefModelConfig(_sdf->GetElement("sensorReference"));
+  auto model_config = parseRefModelConfig(_sdf->GetElement("sensorReference"));
 
   // Get sensor model
   auto model = world_->ModelByName(model_config->model_name);
@@ -64,11 +69,32 @@ void GvmMulticameraBootstrapperPlugin::Load(physics::WorldPtr _world,
   if (not link_)
     gzthrow(logger_prefix_ + "Failed to get link " + model_config->link_name +
             " in model " + model_config->model_name);
+
+  nh_ = boost::make_shared<ros::NodeHandle>();
+  nh_->setCallbackQueue(&callback_queue_);
+  spinner_.start();
+
+  if (_sdf->HasElement("initService"))
+    init_service_server_ = nh_->advertiseService(
+        _sdf->Get<std::string>("initService"),
+        &GvmMulticameraBootstrapperPlugin::initServiceCallback, this);
 }
 
 void GvmMulticameraBootstrapperPlugin::Init() {
+  // If the subscriber is enabled, it will be responsible for initialization
+  if (not init_service_server_.getService().empty()) return;
   event::Events::createSensor(sdf_->GetElement("sensor"), world_->Name(),
                               link_->GetScopedName(), link_->GetId());
+}
+
+bool GvmMulticameraBootstrapperPlugin::initServiceCallback(
+    std_srvs::EmptyRequest &req, std_srvs::EmptyResponse &res) {
+  if (not inited_) {
+    event::Events::createSensor(sdf_->GetElement("sensor"), world_->Name(),
+                                link_->GetScopedName(), link_->GetId());
+    inited_ = true;
+  }
+  return true;
 }
 
 GZ_REGISTER_WORLD_PLUGIN(GvmMulticameraBootstrapperPlugin)

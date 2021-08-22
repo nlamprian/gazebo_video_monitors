@@ -18,6 +18,10 @@
 #ifndef GAZEBO_VIDEO_MONITOR_PLUGINS_GVM_MULTICAMERA_BOOTSTRAPPER_PLUGIN_H
 #define GAZEBO_VIDEO_MONITOR_PLUGINS_GVM_MULTICAMERA_BOOTSTRAPPER_PLUGIN_H
 
+#include <ros/callback_queue.h>
+#include <ros/ros.h>
+#include <std_srvs/Empty.h>
+
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/physics/physics.hh>
 
@@ -31,6 +35,9 @@ namespace gazebo {
  * adds a gvm_multicamera sensor to a given model.
  * @note Expects the following configuration:
  *   - sensor: configuration of a gvm_multicamera sensor
+ *   - initService (optional): if one of the many reasons that make gazebo
+ *     crash gives you trouble, you can configure a service to call to control
+ *     when the gvm sensor gets created and initialized
  *   - sensorReference: reference model configuration for the multicamera
  *     sensor. It contains the name of the model (normally ground_plane) with
  *     which to associate the sensor, and the name of the link to which to
@@ -44,10 +51,20 @@ class GvmMulticameraBootstrapperPlugin : public WorldPlugin {
   virtual void Init() override;
 
  private:
+  bool initServiceCallback(std_srvs::EmptyRequest &req,
+                           std_srvs::EmptyResponse &res);
+
   std::string logger_prefix_;
   sdf::ElementPtr sdf_;
   physics::WorldPtr world_;
   physics::LinkPtr link_;
+
+  ros::NodeHandlePtr nh_;
+  ros::CallbackQueue callback_queue_;
+  ros::AsyncSpinner spinner_;
+
+  bool inited_;
+  ros::ServiceServer init_service_server_;
 };
 
 }  // namespace gazebo
