@@ -2,6 +2,16 @@
 Changelog for package gazebo_video_monitor_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.0 (2021-08-23)
+------------------
+* Resolve catkin lint errors
+* Add service for deferred initialization
+  Launching a simulation with a robot that has ray sensors may make
+  Gazebo/ODE crash. The part that makes the difference is the creation
+  of the scene (if skipped, the crash goes away). Having found no
+  sensible reason why this is, I add this service to give control to
+  the user when to initialize the plugin.
+
 0.6.0 (2020-12-06)
 ------------------
 * Add metapackage

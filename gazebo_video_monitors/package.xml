@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>gazebo_video_monitors</name>
-  <version>0.6.0</version>
+  <version>0.7.0</version>
   <description>
     Metapackage that groups together the gazebo_video_monitors packages.
   </description>

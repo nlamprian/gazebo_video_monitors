@@ -2,6 +2,10 @@
 Changelog for package gazebo_video_monitor_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.0 (2021-08-23)
+------------------
+* Resolve catkin lint errors
+
 0.6.0 (2020-12-06)
 ------------------
 * Add metapackage

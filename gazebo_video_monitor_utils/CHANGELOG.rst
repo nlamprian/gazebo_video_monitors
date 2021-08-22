@@ -2,5 +2,13 @@
 Changelog for package gazebo_video_monitor_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.0 (2021-08-23)
+------------------
+* Resolve catkin lint errors
+* Add wait_for_model utility
+  - Add utils package
+  - Provide script that waits for model to appear and then triggers
+  initialization of a gvm plugin
+
 0.6.0 (2020-12-06)
 ------------------
