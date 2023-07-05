@@ -1,18 +1,21 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>gazebo_video_monitor_utils</name>
   <version>0.7.0</version>
   <description>
-    gazebo_video_monitor_utils contains utility scripts that are meant to interact with the gazebo video monitor plugins.
+    Contains utility scripts that are meant to interact with the gazebo video monitor plugins.
   </description>
 
-  <author email="nlamprian@gmail.com">Nick Lamprianidis</author>
-  <maintainer email="nlamprian@gmail.com">Nick Lamprianidis</maintainer>
-
+  <maintainer email="info@nlamprian.me">Nick Lamprianidis</maintainer>
   <license>GPLv3</license>
+  <author email="info@nlamprian.me">Nick Lamprianidis</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
   <exec_depend>gazebo_msgs</exec_depend>
-  <exec_depend>rospy</exec_depend>
+  <exec_depend>rclpy</exec_depend>
   <exec_depend>std_srvs</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
 </package>
