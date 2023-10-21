@@ -6,14 +6,15 @@
     Metapackage that groups together the gazebo_video_monitors packages.
   </description>
 
-  <author email="nlamprian@gmail.com">Nick Lamprianidis</author>
-  <maintainer email="nlamprian@gmail.com">Nick Lamprianidis</maintainer>
+  <author email="info@nlamprian.me">Nick Lamprianidis</author>
+  <maintainer email="info@nlamprian.me">Nick Lamprianidis</maintainer>
 
   <license>GPLv3</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   <exec_depend>gazebo_video_monitor_msgs</exec_depend>
   <exec_depend>gazebo_video_monitor_plugins</exec_depend>
+  <exec_depend>gazebo_video_monitor_utils</exec_depend>
 
   <export>
     <metapackage />
