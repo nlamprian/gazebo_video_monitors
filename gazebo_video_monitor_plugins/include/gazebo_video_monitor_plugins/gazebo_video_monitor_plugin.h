@@ -21,14 +21,12 @@
 #include <mutex>
 #include <vector>
 
-#include <ros/ros.h>
-
 #include <gazebo/common/Plugin.hh>
 
-#include <gazebo_video_monitor_msgs/StartGvmRecording.h>
-#include <gazebo_video_monitor_msgs/StopRecording.h>
 #include <gazebo_video_monitor_plugins/gazebo_monitor_base_plugin.h>
 #include <gazebo_video_monitor_plugins/utils/gazebo_video_recorder.h>
+#include <gazebo_video_monitor_interfaces/srv/start_gvm_recording.hpp>
+#include <gazebo_video_monitor_interfaces/srv/stop_recording.hpp>
 
 namespace gazebo {
 
@@ -52,7 +50,10 @@ namespace gazebo {
  *   - cameraReference: reference model configuration with a name attribute
  *     pointing to the robot camera (see \ref parseRefModelConfig)
  */
-class GazeboVideoMonitorPlugin : public GazeboMonitorBasePlugin {
+class GazeboVideoMonitorPlugin
+    : public GazeboMonitorBasePlugin<
+          gazebo_video_monitor_interfaces::srv::StartGvmRecording,
+          gazebo_video_monitor_interfaces::srv::StopRecording> {
  public:
   GazeboVideoMonitorPlugin();
   virtual ~GazeboVideoMonitorPlugin() override;
@@ -64,11 +65,15 @@ class GazeboVideoMonitorPlugin : public GazeboMonitorBasePlugin {
   virtual void onNewImages(const ImageDataPtrVector &images) override;
   std::string stopRecording(bool discard, std::string filename = "");
   bool startRecordingServiceCallback(
-      gazebo_video_monitor_msgs::StartGvmRecordingRequest &req,
-      gazebo_video_monitor_msgs::StartGvmRecordingResponse &res);
+      const gazebo_video_monitor_interfaces::srv::StartGvmRecording::Request::
+          SharedPtr req,
+      gazebo_video_monitor_interfaces::srv::StartGvmRecording::Response::
+          SharedPtr res);
   bool stopRecordingServiceCallback(
-      gazebo_video_monitor_msgs::StopRecordingRequest &req,
-      gazebo_video_monitor_msgs::StopRecordingResponse &res);
+      const gazebo_video_monitor_interfaces::srv::StopRecording::Request::
+          SharedPtr req,
+      gazebo_video_monitor_interfaces::srv::StopRecording::Response::SharedPtr
+          res);
 
   const std::vector<std::string> camera_names_;
 

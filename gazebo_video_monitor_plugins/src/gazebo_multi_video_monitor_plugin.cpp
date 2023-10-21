@@ -47,13 +47,15 @@ void GazeboMultiVideoMonitorPlugin::Load(sensors::SensorPtr _sensor,
   // Confirm presence of cameras
   auto names = sensor_->getCameraNames();
   if (names.empty())
-    ROS_WARN_STREAM(logger_prefix_ << "There are no cameras in the sensor");
+    RCLCPP_WARN_STREAM(ros_node_->get_logger(),
+                       logger_prefix_ << "There are no cameras in the sensor");
 
   // Initialize recorders
   auto rate = static_cast<unsigned int>(sensor_->UpdateRate());
   auto ns = getClassName<GazeboMultiVideoMonitorPlugin>();
   for (const auto &name : names) {
-    recorders_[name] = std::make_shared<GazeboVideoRecorder>(rate, ns, name);
+    recorders_[name] =
+        std::make_shared<GazeboVideoRecorder>(ros_node_, rate, ns, name);
     recorders_[name]->load(world_, sdf_recorder);
     // NOTE Only the group directory should have the timestamp
     recorders_[name]->setAddTimestampInFilename(false);
@@ -79,12 +81,17 @@ void GazeboMultiVideoMonitorPlugin::initRos() {
   auto stop_service_name = sdf_->Get<std::string>("stopRecordingService");
 
   // Initialize recording services
-  start_recording_service_ = nh_->advertiseService(
+  start_recording_service_ = ros_node_->create_service<std_srvs::srv::Empty>(
       start_service_name,
-      &GazeboMultiVideoMonitorPlugin::startRecordingServiceCallback, this);
-  stop_recording_service_ = nh_->advertiseService(
-      stop_service_name,
-      &GazeboMultiVideoMonitorPlugin::stopRecordingServiceCallback, this);
+      std::bind(&GazeboMultiVideoMonitorPlugin::startRecordingServiceCallback,
+                this, std::placeholders::_1, std::placeholders::_2));
+  stop_recording_service_ =
+      ros_node_
+          ->create_service<gazebo_video_monitor_interfaces::srv::StopRecording>(
+              stop_service_name,
+              std::bind(
+                  &GazeboMultiVideoMonitorPlugin::stopRecordingServiceCallback,
+                  this, std::placeholders::_1, std::placeholders::_2));
 }
 
 void GazeboMultiVideoMonitorPlugin::onNewImages(
@@ -110,13 +117,15 @@ bool GazeboMultiVideoMonitorPlugin::stopRecording(
 }
 
 bool GazeboMultiVideoMonitorPlugin::startRecordingServiceCallback(
-    std_srvs::EmptyRequest & /*req*/, std_srvs::EmptyResponse & /*res*/) {
+    const std_srvs::srv::Empty::Request::SharedPtr /*req*/,
+    std_srvs::srv::Empty::Response::SharedPtr /*res*/) {
   std::lock_guard<std::mutex> lock(recorders_mutex_);
 
   // Stop active recording
   if (sensor_->isRecording()) {
-    ROS_WARN_STREAM(logger_prefix_
-                    << "There is already an active recording; resetting");
+    RCLCPP_WARN_STREAM(
+        ros_node_->get_logger(),
+        logger_prefix_ << "There is already an active recording; resetting");
     stopRecording(true);
   }
 
@@ -133,28 +142,33 @@ bool GazeboMultiVideoMonitorPlugin::startRecordingServiceCallback(
 }
 
 bool GazeboMultiVideoMonitorPlugin::stopRecordingServiceCallback(
-    gazebo_video_monitor_msgs::StopRecordingRequest &req,
-    gazebo_video_monitor_msgs::StopRecordingResponse &res) {
+    const gazebo_video_monitor_interfaces::srv::StopRecording::Request::
+        SharedPtr req,
+    gazebo_video_monitor_interfaces::srv::StopRecording::Response::SharedPtr
+        res) {
   if (not sensor_->isRecording()) {
-    ROS_WARN_STREAM(logger_prefix_ << "No active recording; ignoring request");
-    res.success = false;
+    RCLCPP_WARN_STREAM(
+        ros_node_->get_logger(),
+        logger_prefix_ << "No active recording; ignoring request");
+    res->success = false;
     return true;
   }
 
   // Create group directory
-  boost::filesystem::path group_directory = req.filename;
+  boost::filesystem::path group_directory = req->filename;
   if (add_timestamp_in_filename_) group_directory += "-" + file_timestamp_;
   boost::filesystem::path group_save_path = save_path_ / group_directory;
-  if (not req.discard and not createDirectory(group_save_path)) {
-    ROS_WARN_STREAM(logger_prefix_ + "Failed to create directory " +
-                    group_save_path.string());
-    res.success = false;
+  if (not req->discard and not createDirectory(group_save_path, ros_node_)) {
+    RCLCPP_WARN_STREAM(ros_node_->get_logger(),
+                       logger_prefix_ + "Failed to create directory " +
+                           group_save_path.string());
+    res->success = false;
     return true;
   }
 
   std::lock_guard<std::mutex> lock(recorders_mutex_);
-  res.success = stopRecording(req.discard, group_directory);
-  if (not req.discard) res.path = group_save_path.string();
+  res->success = stopRecording(req->discard, group_directory);
+  if (not req->discard) res->path = group_save_path.string();
   return true;
 }
 

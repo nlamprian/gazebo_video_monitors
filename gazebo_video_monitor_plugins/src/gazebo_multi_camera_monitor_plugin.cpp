@@ -60,7 +60,7 @@ void GazeboMultiCameraMonitorPlugin::Load(sensors::SensorPtr _sensor,
 
   // Initialize recorder
   recorder_ = std::make_shared<GazeboVideoRecorder>(
-      static_cast<unsigned int>(sensor_->UpdateRate()),
+      ros_node_, static_cast<unsigned int>(sensor_->UpdateRate()),
       getClassName<GazeboMultiCameraMonitorPlugin>());
   if (not sdf_->HasElement("recorder"))
     gzthrow(logger_prefix_ + "Failed to get recorder");
@@ -91,17 +91,27 @@ void GazeboMultiCameraMonitorPlugin::initRos() {
   auto camera_select_topic_name = sdf_->Get<std::string>("cameraSelectTopic");
 
   // Initialize recording services
-  start_recording_service_ = nh_->advertiseService(
+  start_recording_service_ = ros_node_->create_service<
+      gazebo_video_monitor_interfaces::srv::StartGmcmRecording>(
       start_service_name,
-      &GazeboMultiCameraMonitorPlugin::startRecordingServiceCallback, this);
-  stop_recording_service_ = nh_->advertiseService(
-      stop_service_name,
-      &GazeboMultiCameraMonitorPlugin::stopRecordingServiceCallback, this);
+      std::bind(&GazeboMultiCameraMonitorPlugin::startRecordingServiceCallback,
+                this, std::placeholders::_1, std::placeholders::_2));
+  stop_recording_service_ =
+      ros_node_
+          ->create_service<gazebo_video_monitor_interfaces::srv::StopRecording>(
+              stop_service_name,
+              std::bind(
+                  &GazeboMultiCameraMonitorPlugin::stopRecordingServiceCallback,
+                  this, std::placeholders::_1, std::placeholders::_2));
 
   // Initialize camera select subscriber
-  camera_select_ros_subscriber_ = nh_->subscribe(
-      camera_select_topic_name, 10,
-      &GazeboMultiCameraMonitorPlugin::cameraSelectRosCallback, this);
+  camera_select_ros_subscriber_ =
+      ros_node_
+          ->create_subscription<gazebo_video_monitor_interfaces::msg::Strings>(
+              camera_select_topic_name, 10,
+              std::bind(
+                  &GazeboMultiCameraMonitorPlugin::cameraSelectRosCallback,
+                  this, std::placeholders::_1));
 }
 
 void GazeboMultiCameraMonitorPlugin::onNewImages(
@@ -120,21 +130,25 @@ void GazeboMultiCameraMonitorPlugin::cameraSelect(
   if (std::any_of(names.begin(), names.end(), [&](const auto &name) {
         return camera_name_to_index_map_.count(name) == 0;
       })) {
-    ROS_WARN_STREAM(logger_prefix_
-                    << "Received message with invalid camera names; "
-                       "ignoring message");
+    RCLCPP_WARN_STREAM(ros_node_->get_logger(),
+                       logger_prefix_
+                           << "Received message with invalid camera names; "
+                              "ignoring message");
     return;
   }
 
   size_t num_names = names.size();
   if (num_names > 2) {
-    ROS_WARN_STREAM(logger_prefix_
-                    << "Received message with more than 2 camera names; "
-                       "ignoring the extra cameras");
+    RCLCPP_WARN_STREAM(ros_node_->get_logger(),
+                       logger_prefix_
+                           << "Received message with more than 2 camera names; "
+                              "ignoring the extra cameras");
     num_names = 2;
   } else if (num_names == 0) {
-    ROS_WARN_STREAM(logger_prefix_ << "Received message with 0 camera names; "
-                                   << "ignoring message");
+    RCLCPP_WARN_STREAM(ros_node_->get_logger(),
+                       logger_prefix_
+                           << "Received message with 0 camera names; "
+                           << "ignoring message");
     return;
   }
 
@@ -152,7 +166,7 @@ void GazeboMultiCameraMonitorPlugin::cameraSelectCallback(
 }
 
 void GazeboMultiCameraMonitorPlugin::cameraSelectRosCallback(
-    const gazebo_video_monitor_msgs::StringsConstPtr &msg) {
+    const gazebo_video_monitor_interfaces::msg::Strings::SharedPtr msg) {
   std::lock_guard<std::mutex> lock(recorder_mutex_);
   cameraSelect(msg->names);
 }
@@ -164,19 +178,22 @@ std::string GazeboMultiCameraMonitorPlugin::stopRecording(
 }
 
 bool GazeboMultiCameraMonitorPlugin::startRecordingServiceCallback(
-    gazebo_video_monitor_msgs::StartGmcmRecordingRequest &req,
-    gazebo_video_monitor_msgs::StartGmcmRecordingResponse & /*res*/) {
+    const gazebo_video_monitor_interfaces::srv::StartGmcmRecording::Request::
+        SharedPtr req,
+    gazebo_video_monitor_interfaces::srv::StartGmcmRecording::Response::
+        SharedPtr /*res*/) {
   std::lock_guard<std::mutex> lock(recorder_mutex_);
 
   // Stop active recording
   if (sensor_->isRecording()) {
-    ROS_WARN_STREAM(logger_prefix_
-                    << "There is already an active recording; resetting");
+    RCLCPP_WARN_STREAM(
+        ros_node_->get_logger(),
+        logger_prefix_ << "There is already an active recording; resetting");
     stopRecording(true);
   }
 
   // Select cameras
-  if (req.cameras.names.size() > 0) cameraSelect(req.cameras.names);
+  if (req->cameras.names.size() > 0) cameraSelect(req->cameras.names);
 
   // Start recording
   recorder_->start(save_path_, getStringTimestamp(std::time(nullptr)),
@@ -189,17 +206,21 @@ bool GazeboMultiCameraMonitorPlugin::startRecordingServiceCallback(
 }
 
 bool GazeboMultiCameraMonitorPlugin::stopRecordingServiceCallback(
-    gazebo_video_monitor_msgs::StopRecordingRequest &req,
-    gazebo_video_monitor_msgs::StopRecordingResponse &res) {
+    const gazebo_video_monitor_interfaces::srv::StopRecording::Request::
+        SharedPtr req,
+    gazebo_video_monitor_interfaces::srv::StopRecording::Response::SharedPtr
+        res) {
   if (not sensor_->isRecording()) {
-    ROS_WARN_STREAM(logger_prefix_ << "No active recording; ignoring request");
-    res.success = false;
+    RCLCPP_WARN_STREAM(
+        ros_node_->get_logger(),
+        logger_prefix_ << "No active recording; ignoring request");
+    res->success = false;
     return true;
   }
 
   std::lock_guard<std::mutex> lock(recorder_mutex_);
-  res.path = stopRecording(req.discard, req.filename);
-  res.success = not res.path.empty() or req.discard;
+  res->path = stopRecording(req->discard, req->filename);
+  res->success = not res->path.empty() or req->discard;
   return true;
 }
 

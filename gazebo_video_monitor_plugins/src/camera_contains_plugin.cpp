@@ -25,8 +25,9 @@
 namespace gazebo {
 
 CameraContainsPlugin::CameraContainsPlugin()
-    : logger_prefix_(getClassName<CameraContainsPlugin>()),
-      spinner_(1, &callback_queue_) {}
+    : logger_prefix_(getClassName<CameraContainsPlugin>()) {}
+
+CameraContainsPlugin::~CameraContainsPlugin() { ros_node_.reset(); }
 
 void CameraContainsPlugin::Load(physics::WorldPtr _world,
                                 sdf::ElementPtr _sdf) {
@@ -59,23 +60,15 @@ void CameraContainsPlugin::Load(physics::WorldPtr _world,
   // Initialize container
   container_ = ignition::math::OrientedBoxd(size, pose);
 
-  if (not ros::isInitialized()) {
-    ROS_FATAL_STREAM(
-        "A ROS node for Gazebo has not been initialized, unable to load "
-        "plugin. Load the Gazebo system plugin 'libgazebo_ros_api_plugin.so' "
-        "in the gazebo_ros package");
-    return;
-  }
-
-  nh_ = boost::make_shared<ros::NodeHandle>();
-  nh_->setCallbackQueue(&callback_queue_);
-  spinner_.start();
+  ros_node_ = gazebo_ros::Node::Get(_sdf);
 
   // Initialize publisher
   if (not _sdf->HasElement("topic"))
     gzthrow(logger_prefix_ + "Failed to get topic");
-  publisher_ = nh_->advertise<gazebo_video_monitor_msgs::Strings>(
-      _sdf->Get<std::string>("topic"), 10);
+  publisher_ =
+      ros_node_
+          ->create_publisher<gazebo_video_monitor_interfaces::msg::Strings>(
+              _sdf->Get<std::string>("topic"), 10);
   msg_.names = cameras_;
 
   // Initialize container visualizer
@@ -114,7 +107,7 @@ void CameraContainsPlugin::onUpdate(const common::UpdateInfo &info) {
 
   if (contains_model) {
     if (not contains_model_) {
-      publisher_.publish(msg_);
+      publisher_->publish(msg_);
       contains_model_ = true;
     }
   } else {

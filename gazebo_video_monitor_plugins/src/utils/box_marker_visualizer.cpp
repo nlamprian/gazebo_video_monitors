@@ -40,7 +40,7 @@ BoxMarkerVisualizer::~BoxMarkerVisualizer() {
 }
 
 void BoxMarkerVisualizer::spawnMarker(uint64_t id, const math::Vector3d &size,
-                                        const math::Pose3d &pose) {
+                                      const math::Pose3d &pose) {
   msg_.set_id(id);
   // msg_.set_parent(parent_scoped_name);
   msgs::Set(msg_.mutable_pose(), pose);

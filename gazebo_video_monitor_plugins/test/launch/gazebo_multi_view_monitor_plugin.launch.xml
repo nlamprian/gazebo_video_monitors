@@ -1,0 +1,7 @@
+<launch>
+  <include file="$(find-pkg-share gazebo_ros)/launch/gazebo.launch.py">
+    <arg name="world" value="$(find-pkg-share gazebo_video_monitor_plugins)/test/worlds/gazebo_multi_view_monitor_plugin.world" />
+    <arg name="verbose" value="true" />
+    <arg name="gui" value="true" />
+  </include>
+</launch>

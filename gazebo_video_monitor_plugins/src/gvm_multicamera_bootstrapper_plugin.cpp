@@ -24,7 +24,6 @@ namespace gazebo {
 
 GvmMulticameraBootstrapperPlugin::GvmMulticameraBootstrapperPlugin()
     : logger_prefix_(getClassName<GvmMulticameraBootstrapperPlugin>() + ": "),
-      spinner_(1, &callback_queue_),
       inited_(false) {
   sensors::SensorFactory::RegisterSensor(
       "gvm_multicamera", reinterpret_cast<sensors::SensorFactoryFn>(
@@ -32,9 +31,7 @@ GvmMulticameraBootstrapperPlugin::GvmMulticameraBootstrapperPlugin()
 }
 
 GvmMulticameraBootstrapperPlugin::~GvmMulticameraBootstrapperPlugin() {
-  callback_queue_.clear();
-  callback_queue_.disable();
-  nh_->shutdown();
+  ros_node_.reset();
 
   if (not link_) return;
   std::string scoped_sensor_name =
@@ -70,25 +67,25 @@ void GvmMulticameraBootstrapperPlugin::Load(physics::WorldPtr _world,
     gzthrow(logger_prefix_ + "Failed to get link " + model_config->link_name +
             " in model " + model_config->model_name);
 
-  nh_ = boost::make_shared<ros::NodeHandle>();
-  nh_->setCallbackQueue(&callback_queue_);
-  spinner_.start();
+  ros_node_ = gazebo_ros::Node::Get(_sdf);
 
   if (_sdf->HasElement("initService"))
-    init_service_server_ = nh_->advertiseService(
+    init_service_server_ = ros_node_->create_service<std_srvs::srv::Empty>(
         _sdf->Get<std::string>("initService"),
-        &GvmMulticameraBootstrapperPlugin::initServiceCallback, this);
+        std::bind(&GvmMulticameraBootstrapperPlugin::initServiceCallback, this,
+                  std::placeholders::_1, std::placeholders::_2));
 }
 
 void GvmMulticameraBootstrapperPlugin::Init() {
   // If the subscriber is enabled, it will be responsible for initialization
-  if (not init_service_server_.getService().empty()) return;
+  if (sdf_->HasElement("initService")) return;
   event::Events::createSensor(sdf_->GetElement("sensor"), world_->Name(),
                               link_->GetScopedName(), link_->GetId());
 }
 
 bool GvmMulticameraBootstrapperPlugin::initServiceCallback(
-    std_srvs::EmptyRequest &req, std_srvs::EmptyResponse &res) {
+    const std_srvs::srv::Empty::Request::SharedPtr req,
+    std_srvs::srv::Empty::Response::SharedPtr res) {
   if (not inited_) {
     event::Events::createSensor(sdf_->GetElement("sensor"), world_->Name(),
                                 link_->GetScopedName(), link_->GetId());

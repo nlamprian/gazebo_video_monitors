@@ -22,18 +22,19 @@
 #include <string>
 #include <vector>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <gazebo/common/CommonIface.hh>
 #include <gazebo/common/Events.hh>
 #include <gazebo/physics/Link.hh>
+#include <gazebo/physics/PhysicsIface.hh>
 #include <gazebo/rendering/Camera.hh>
 #include <gazebo/rendering/Scene.hh>
 #include <gazebo/sensors/Sensor.hh>
 #include <gazebo/util/system.hh>
 
-#include <gazebo_video_monitor_msgs/SetCamera.h>
 #include <gazebo_video_monitor_plugins/internal/types.h>
+#include <gazebo_video_monitor_interfaces/srv/set_camera.hpp>
 
 namespace gazebo {
 namespace sensors {
@@ -52,7 +53,7 @@ class GZ_SENSORS_VISIBLE GvmMulticameraSensor : public Sensor {
   struct ImageData {
     ImageData(const std::string &name) : name(name) {}
 
-    size_t getStep() const { return width * depth; }
+    size_t getStep() const { return static_cast<size_t>(width * depth); }
 
     const std::string name;
     const unsigned char *data = nullptr;
@@ -202,7 +203,7 @@ class GZ_SENSORS_VISIBLE GvmMulticameraSensor : public Sensor {
   virtual void Load(const std::string &world_name) override;
   virtual void Init() override;
   virtual bool IsActive() const override;
-  void initRos(ros::NodeHandlePtr &nh,
+  void initRos(const rclcpp::Node::SharedPtr &node,
                const std::string &set_camera_service_name);
   static sensors::GvmMulticameraSensor *newSensor();
   std::vector<std::string> getCameraNames() const;
@@ -221,8 +222,9 @@ class GZ_SENSORS_VISIBLE GvmMulticameraSensor : public Sensor {
   void Render();
   virtual bool UpdateImpl(const bool force) override;
   bool setCameraServiceCallback(
-      gazebo_video_monitor_msgs::SetCameraRequest &req,
-      gazebo_video_monitor_msgs::SetCameraResponse &res);
+      const gazebo_video_monitor_interfaces::srv::SetCamera::Request::SharedPtr
+          req,
+      gazebo_video_monitor_interfaces::srv::SetCamera::Response::SharedPtr res);
 
   physics::LinkPtr link_;
 
@@ -238,7 +240,8 @@ class GZ_SENSORS_VISIBLE GvmMulticameraSensor : public Sensor {
   bool rendered_;
   bool recording_;
 
-  ros::ServiceServer set_camera_service_;
+  rclcpp::Service<gazebo_video_monitor_interfaces::srv::SetCamera>::SharedPtr
+      set_camera_service_;
 };
 
 using GvmMulticameraSensorPtr = std::shared_ptr<GvmMulticameraSensor>;

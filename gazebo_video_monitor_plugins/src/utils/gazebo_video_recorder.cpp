@@ -24,10 +24,12 @@
 
 namespace gazebo {
 
-GazeboVideoRecorder::GazeboVideoRecorder(unsigned int fps,
+GazeboVideoRecorder::GazeboVideoRecorder(const rclcpp::Node::SharedPtr &node,
+                                         unsigned int fps,
                                          const std::string &ns,
                                          const std::string &name)
     : logger_prefix_(ns + "::" + getClassName<GazeboVideoRecorder>()),
+      node_(node),
       fps_(fps),
       log_metadata_(false),
       log_wall_time_(false),
@@ -114,16 +116,19 @@ std::string GazeboVideoRecorder::stop(bool discard, std::string filename) {
 
   std::string path;
   if (discard) {
-    ROS_INFO_STREAM(logger_prefix_ << "Discarding active recording");
+    RCLCPP_INFO_STREAM(node_->get_logger(),
+                       logger_prefix_ << "Discarding active recording");
   } else {
     if (filename.empty()) filename = "video";
     auto file = getPath(filename, add_timestamp_in_filename_);
     if (video_encoder_.SaveToFile(file)) {
       path = file;
-      ROS_INFO_STREAM(logger_prefix_ << "Recording saved in " << path);
+      RCLCPP_INFO_STREAM(node_->get_logger(),
+                         logger_prefix_ << "Recording saved in " << path);
     } else {
-      ROS_WARN_STREAM(logger_prefix_ << "Failed to save recording " << file
-                                     << "; resetting");
+      RCLCPP_WARN_STREAM(node_->get_logger(), logger_prefix_
+                                                  << "Failed to save recording "
+                                                  << file << "; resetting");
     }
   }
   if (path.empty()) video_encoder_.Reset();

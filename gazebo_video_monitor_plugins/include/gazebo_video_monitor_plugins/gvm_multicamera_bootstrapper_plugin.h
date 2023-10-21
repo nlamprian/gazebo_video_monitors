@@ -18,12 +18,13 @@
 #ifndef GAZEBO_VIDEO_MONITOR_PLUGINS_GVM_MULTICAMERA_BOOTSTRAPPER_PLUGIN_H
 #define GAZEBO_VIDEO_MONITOR_PLUGINS_GVM_MULTICAMERA_BOOTSTRAPPER_PLUGIN_H
 
-#include <ros/callback_queue.h>
-#include <ros/ros.h>
-#include <std_srvs/Empty.h>
+#include <rclcpp/rclcpp.hpp>
+#include <std_srvs/srv/empty.hpp>
 
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/physics/physics.hh>
+
+#include <gazebo_ros/node.hpp>
 
 #include <gazebo_video_monitor_plugins/internal/utils.h>
 #include <gazebo_video_monitor_plugins/sensors/gvm_multicamera_sensor.h>
@@ -51,20 +52,18 @@ class GvmMulticameraBootstrapperPlugin : public WorldPlugin {
   virtual void Init() override;
 
  private:
-  bool initServiceCallback(std_srvs::EmptyRequest &req,
-                           std_srvs::EmptyResponse &res);
+  bool initServiceCallback(const std_srvs::srv::Empty::Request::SharedPtr req,
+                           std_srvs::srv::Empty::Response::SharedPtr res);
 
   std::string logger_prefix_;
   sdf::ElementPtr sdf_;
   physics::WorldPtr world_;
   physics::LinkPtr link_;
 
-  ros::NodeHandlePtr nh_;
-  ros::CallbackQueue callback_queue_;
-  ros::AsyncSpinner spinner_;
+  gazebo_ros::Node::SharedPtr ros_node_;
 
   bool inited_;
-  ros::ServiceServer init_service_server_;
+  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr init_service_server_;
 };
 
 }  // namespace gazebo

@@ -20,14 +20,15 @@
 
 #include <vector>
 
-#include <ros/callback_queue.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/physics/physics.hh>
 
-#include <gazebo_video_monitor_msgs/Strings.h>
+#include <gazebo_ros/node.hpp>
+
 #include <gazebo_video_monitor_plugins/utils/box_marker_visualizer.h>
+#include <gazebo_video_monitor_interfaces/msg/strings.hpp>
 
 namespace gazebo {
 
@@ -48,6 +49,7 @@ namespace gazebo {
 class CameraContainsPlugin : public WorldPlugin {
  public:
   CameraContainsPlugin();
+  virtual ~CameraContainsPlugin() override;
   void Load(physics::WorldPtr _world, sdf::ElementPtr _sdf) override;
 
  private:
@@ -62,12 +64,11 @@ class CameraContainsPlugin : public WorldPlugin {
   std::vector<std::string> cameras_;
   ignition::math::OrientedBoxd container_;
 
-  ros::NodeHandlePtr nh_;
-  ros::CallbackQueue callback_queue_;
-  ros::AsyncSpinner spinner_;
+  gazebo_ros::Node::SharedPtr ros_node_;
 
-  ros::Publisher publisher_;
-  gazebo_video_monitor_msgs::Strings msg_;
+  rclcpp::Publisher<gazebo_video_monitor_interfaces::msg::Strings>::SharedPtr
+      publisher_;
+  gazebo_video_monitor_interfaces::msg::Strings msg_;
   bool contains_model_;
 
   BoxMarkerVisualizerPtr container_visualizer_;

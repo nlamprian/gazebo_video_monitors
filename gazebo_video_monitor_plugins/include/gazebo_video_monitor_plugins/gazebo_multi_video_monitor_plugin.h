@@ -23,14 +23,13 @@
 
 #include <boost/filesystem/operations.hpp>
 
-#include <ros/ros.h>
-#include <std_srvs/Empty.h>
+#include <std_srvs/srv/empty.hpp>
 
 #include <gazebo/common/Plugin.hh>
 
-#include <gazebo_video_monitor_msgs/StopRecording.h>
 #include <gazebo_video_monitor_plugins/gazebo_monitor_base_plugin.h>
 #include <gazebo_video_monitor_plugins/utils/gazebo_video_recorder.h>
+#include <gazebo_video_monitor_interfaces/srv/stop_recording.hpp>
 
 namespace gazebo {
 
@@ -55,7 +54,10 @@ namespace gazebo {
  *     attribute pointing to one of the sensor cameras
  *     (see \ref parseRefModelConfig)
  */
-class GazeboMultiVideoMonitorPlugin : public GazeboMonitorBasePlugin {
+class GazeboMultiVideoMonitorPlugin
+    : public GazeboMonitorBasePlugin<
+          std_srvs::srv::Empty,
+          gazebo_video_monitor_interfaces::srv::StopRecording> {
  public:
   GazeboMultiVideoMonitorPlugin();
   virtual ~GazeboMultiVideoMonitorPlugin() override;
@@ -67,11 +69,14 @@ class GazeboMultiVideoMonitorPlugin : public GazeboMonitorBasePlugin {
   virtual void onNewImages(const ImageDataPtrVector &images) override;
   bool stopRecording(bool discard,
                      boost::filesystem::path group_directory = "");
-  bool startRecordingServiceCallback(std_srvs::EmptyRequest &req,
-                                     std_srvs::EmptyResponse &res);
+  bool startRecordingServiceCallback(
+      const std_srvs::srv::Empty::Request::SharedPtr req,
+      std_srvs::srv::Empty::Response::SharedPtr res);
   bool stopRecordingServiceCallback(
-      gazebo_video_monitor_msgs::StopRecordingRequest &req,
-      gazebo_video_monitor_msgs::StopRecordingResponse &res);
+      const gazebo_video_monitor_interfaces::srv::StopRecording::Request::
+          SharedPtr req,
+      gazebo_video_monitor_interfaces::srv::StopRecording::Response::SharedPtr
+          res);
 
   std::unordered_map<std::string, GazeboVideoRecorderPtr> recorders_;
   std::mutex recorders_mutex_;

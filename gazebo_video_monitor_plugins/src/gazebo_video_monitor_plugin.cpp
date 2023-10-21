@@ -44,7 +44,7 @@ void GazeboVideoMonitorPlugin::Load(sensors::SensorPtr _sensor,
 
   // Initialize recorder
   recorder_ = std::make_shared<GazeboVideoRecorder>(
-      static_cast<unsigned int>(sensor_->UpdateRate()),
+      ros_node_, static_cast<unsigned int>(sensor_->UpdateRate()),
       getClassName<GazeboVideoMonitorPlugin>());
   if (not sdf_->HasElement("recorder"))
     gzthrow(logger_prefix_ + "Failed to get recorder");
@@ -70,12 +70,17 @@ void GazeboVideoMonitorPlugin::initRos() {
   auto stop_service_name = sdf_->Get<std::string>("stopRecordingService");
 
   // Initialize recording services
-  start_recording_service_ = nh_->advertiseService(
+  start_recording_service_ = ros_node_->create_service<
+      gazebo_video_monitor_interfaces::srv::StartGvmRecording>(
       start_service_name,
-      &GazeboVideoMonitorPlugin::startRecordingServiceCallback, this);
-  stop_recording_service_ = nh_->advertiseService(
-      stop_service_name,
-      &GazeboVideoMonitorPlugin::stopRecordingServiceCallback, this);
+      std::bind(&GazeboVideoMonitorPlugin::startRecordingServiceCallback, this,
+                std::placeholders::_1, std::placeholders::_2));
+  stop_recording_service_ =
+      ros_node_
+          ->create_service<gazebo_video_monitor_interfaces::srv::StopRecording>(
+              stop_service_name,
+              std::bind(&GazeboVideoMonitorPlugin::stopRecordingServiceCallback,
+                        this, std::placeholders::_1, std::placeholders::_2));
 }
 
 void GazeboVideoMonitorPlugin::onNewImages(const ImageDataPtrVector &images) {
@@ -95,14 +100,17 @@ std::string GazeboVideoMonitorPlugin::stopRecording(bool discard,
 }
 
 bool GazeboVideoMonitorPlugin::startRecordingServiceCallback(
-    gazebo_video_monitor_msgs::StartGvmRecordingRequest &req,
-    gazebo_video_monitor_msgs::StartGvmRecordingResponse & /*res*/) {
+    const gazebo_video_monitor_interfaces::srv::StartGvmRecording::Request::
+        SharedPtr req,
+    gazebo_video_monitor_interfaces::srv::StartGvmRecording::Response::
+        SharedPtr /*res*/) {
   std::lock_guard<std::mutex> lock(recorder_mutex_);
 
   // Stop active recording
   if (sensor_->isRecording()) {
-    ROS_WARN_STREAM(logger_prefix_
-                    << "There is already an active recording; resetting");
+    RCLCPP_WARN_STREAM(
+        ros_node_->get_logger(),
+        logger_prefix_ << "There is already an active recording; resetting");
     stopRecording(true);
   }
 
@@ -111,25 +119,29 @@ bool GazeboVideoMonitorPlugin::startRecordingServiceCallback(
                    world_->RealTime());
 
   // Set state
-  disable_window_ = req.disable_window;
-  world_as_main_view_ = req.world_as_main_view;
+  disable_window_ = req->disable_window;
+  world_as_main_view_ = req->world_as_main_view;
   sensor_->setRecording(true);
 
   return true;
 }
 
 bool GazeboVideoMonitorPlugin::stopRecordingServiceCallback(
-    gazebo_video_monitor_msgs::StopRecordingRequest &req,
-    gazebo_video_monitor_msgs::StopRecordingResponse &res) {
+    const gazebo_video_monitor_interfaces::srv::StopRecording::Request::
+        SharedPtr req,
+    gazebo_video_monitor_interfaces::srv::StopRecording::Response::SharedPtr
+        res) {
   if (not sensor_->isRecording()) {
-    ROS_WARN_STREAM(logger_prefix_ << "No active recording; ignoring request");
-    res.success = false;
+    RCLCPP_WARN_STREAM(
+        ros_node_->get_logger(),
+        logger_prefix_ << "No active recording; ignoring request");
+    res->success = false;
     return true;
   }
 
   std::lock_guard<std::mutex> lock(recorder_mutex_);
-  res.path = stopRecording(req.discard, req.filename);
-  res.success = not res.path.empty() or req.discard;
+  res->path = stopRecording(req->discard, req->filename);
+  res->success = not res->path.empty() or req->discard;
   return true;
 }
 

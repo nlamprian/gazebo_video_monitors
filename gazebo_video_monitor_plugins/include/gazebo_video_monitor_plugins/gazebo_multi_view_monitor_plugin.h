@@ -23,25 +23,25 @@
 #include <unordered_map>
 #include <vector>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <ignition/msgs/stringmsg_v.pb.h>
 #include <gazebo/common/Plugin.hh>
 
-#include <gazebo_video_monitor_msgs/StartGmcmRecording.h>
-#include <gazebo_video_monitor_msgs/StopRecording.h>
-#include <gazebo_video_monitor_msgs/Strings.h>
 #include <gazebo_video_monitor_plugins/gazebo_monitor_base_plugin.h>
 #include <gazebo_video_monitor_plugins/utils/gazebo_video_recorder.h>
+#include <gazebo_video_monitor_interfaces/msg/strings.hpp>
+#include <gazebo_video_monitor_interfaces/srv/start_gmcm_recording.hpp>
+#include <gazebo_video_monitor_interfaces/srv/stop_recording.hpp>
 
 namespace gazebo {
 
 /**
  * @brief Provides a ROS interface for creating multi-camera videos.
- * @details Records videos with up to 4 camera streams shown in parallel in the 
- * 4 quadrants of the videos. The source streams can be configured from a pool 
- * of n cameras and can be changed dynamically during the recording. Metadata 
- * can be shown in the videos, like real time, sim time, and elapsed real time 
+ * @details Records videos with up to 4 camera streams shown in parallel in the
+ * 4 quadrants of the videos. The source streams can be configured from a pool
+ * of n cameras and can be changed dynamically during the recording. Metadata
+ * can be shown in the videos, like real time, sim time, and elapsed real time
  * since the start of the recording.
  * @note The parent sensor can hold an arbitrary number of cameras. The pose of
  * the cameras in their configuration can be wrt the sensor parent, or any other
@@ -59,8 +59,13 @@ namespace gazebo {
  *     attribute pointing to one of the sensor cameras
  *     (see \ref parseRefModelConfig)
  */
-class GazeboMultiViewMonitorPlugin : public GazeboMonitorBasePlugin {
+class GazeboMultiViewMonitorPlugin
+    : public GazeboMonitorBasePlugin<
+          gazebo_video_monitor_interfaces::srv::StartGmcmRecording,
+          gazebo_video_monitor_interfaces::srv::StopRecording> {
  public:
+  using ImageDataPtr = ImageDataPtrVector::value_type;
+
   GazeboMultiViewMonitorPlugin();
   virtual ~GazeboMultiViewMonitorPlugin() override;
   virtual void Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf) override;
@@ -69,24 +74,29 @@ class GazeboMultiViewMonitorPlugin : public GazeboMonitorBasePlugin {
  private:
   virtual void initRos() override;
   virtual void onNewImages(const ImageDataPtrVector &images) override;
-  const ImageDataPtrVector::value_type &getImage(
-      const ImageDataPtrVector &images, size_t i) const;
+  const ImageDataPtr &getImage(const ImageDataPtrVector &images,
+                               size_t i) const;
   void cameraSelect(const std::vector<std::string> &names);
   void cameraSelectCallback(
       const boost::shared_ptr<const ignition::msgs::StringMsg_V> &msg);
   void cameraSelectRosCallback(
-      const gazebo_video_monitor_msgs::StringsConstPtr &msg);
+      const gazebo_video_monitor_interfaces::msg::Strings::SharedPtr msg);
   std::string stopRecording(bool discard, std::string filename = "");
   bool startRecordingServiceCallback(
-      gazebo_video_monitor_msgs::StartGmcmRecordingRequest &req,
-      gazebo_video_monitor_msgs::StartGmcmRecordingResponse &res);
+      const gazebo_video_monitor_interfaces::srv::StartGmcmRecording::Request::
+          SharedPtr req,
+      gazebo_video_monitor_interfaces::srv::StartGmcmRecording::Response::
+          SharedPtr res);
   bool stopRecordingServiceCallback(
-      gazebo_video_monitor_msgs::StopRecordingRequest &req,
-      gazebo_video_monitor_msgs::StopRecordingResponse &res);
+      const gazebo_video_monitor_interfaces::srv::StopRecording::Request::
+          SharedPtr req,
+      gazebo_video_monitor_interfaces::srv::StopRecording::Response::SharedPtr
+          res);
 
   transport::NodePtr node_;
   transport::SubscriberPtr camera_select_subscriber_;
-  ros::Subscriber camera_select_ros_subscriber_;
+  rclcpp::Subscription<gazebo_video_monitor_interfaces::msg::Strings>::SharedPtr
+      camera_select_ros_subscriber_;
 
   std::unordered_map<std::string, size_t> camera_name_to_index_map_;
   std::vector<size_t> camera_indices_;

@@ -103,11 +103,13 @@ bool GvmMulticameraSensor::IsActive() const {
          recording_;
 }
 
-void GvmMulticameraSensor::initRos(ros::NodeHandlePtr &nh,
+void GvmMulticameraSensor::initRos(const rclcpp::Node::SharedPtr &node,
                                    const std::string &set_camera_service_name) {
-  set_camera_service_ = nh->advertiseService(
-      set_camera_service_name, &GvmMulticameraSensor::setCameraServiceCallback,
-      this);
+  set_camera_service_ =
+      node->create_service<gazebo_video_monitor_interfaces::srv::SetCamera>(
+          set_camera_service_name,
+          std::bind(&GvmMulticameraSensor::setCameraServiceCallback, this,
+                    std::placeholders::_1, std::placeholders::_2));
 }
 
 GvmMulticameraSensor *GvmMulticameraSensor::newSensor() {
@@ -286,43 +288,44 @@ bool GvmMulticameraSensor::UpdateImpl(const bool /*force*/) {
 }
 
 bool GvmMulticameraSensor::setCameraServiceCallback(
-    gazebo_video_monitor_msgs::SetCameraRequest &req,
-    gazebo_video_monitor_msgs::SetCameraResponse &res) {
-  if (cameras_.count(req.camera_name) == 0) {
-    res.message = "Requested camera does not exist";
-    res.success = false;
+    const gazebo_video_monitor_interfaces::srv::SetCamera::Request::SharedPtr
+        req,
+    gazebo_video_monitor_interfaces::srv::SetCamera::Response::SharedPtr res) {
+  if (cameras_.count(req->camera_name) == 0) {
+    res->message = "Requested camera does not exist";
+    res->success = false;
     return true;
   }
 
   // Prepare model configuration
   RefModelConfig model_config;
-  if (req.model_name.empty()) {
+  if (req->model_name.empty()) {
     model_config.model_name = link_->GetModel()->GetName();
     model_config.link_name = link_->GetName();
   } else {
-    auto model = world->ModelByName(req.model_name);
+    auto model = world->ModelByName(req->model_name);
     if (not model) {
-      res.message = "Requested model does not exist";
-      res.success = false;
+      res->message = "Requested model does not exist";
+      res->success = false;
       return true;
     }
 
-    if (not model->GetLink(req.link_name)) {
-      res.message = "Requested link does not exist";
-      res.success = false;
+    if (not model->GetLink(req->link_name)) {
+      res->message = "Requested link does not exist";
+      res->success = false;
       return true;
     }
 
-    model_config.model_name = req.model_name;
-    model_config.link_name = req.link_name;
+    model_config.model_name = req->model_name;
+    model_config.link_name = req->link_name;
   }
-  model_config.setPose(req.pose.x, req.pose.y, req.pose.z, req.pose.roll,
-                       req.pose.pitch, req.pose.yaw);
+  model_config.setPose(req->pose.x, req->pose.y, req->pose.z, req->pose.roll,
+                       req->pose.pitch, req->pose.yaw);
 
-  attachToLink(req.camera_name, model_config);
+  attachToLink(req->camera_name, model_config);
 
-  res.message = "OK";
-  res.success = true;
+  res->message = "OK";
+  res->success = true;
   return true;
 }
 

@@ -26,6 +26,8 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <gazebo/common/VideoEncoder.hh>
 #include <gazebo/physics/physics.hh>
 
@@ -62,8 +64,8 @@ class GazeboVideoRecorder {
   };
 
  public:
-  GazeboVideoRecorder(unsigned int fps, const std::string &ns,
-                      const std::string &name = "");
+  GazeboVideoRecorder(const rclcpp::Node::SharedPtr &node, unsigned int fps,
+                      const std::string &ns, const std::string &name = "");
   ~GazeboVideoRecorder();
   void load(const physics::WorldPtr &world, const sdf::ElementPtr &sdf);
   void reset();
@@ -90,6 +92,8 @@ class GazeboVideoRecorder {
   std::string logger_prefix_;
 
   physics::WorldPtr world_;
+
+  rclcpp::Node::SharedPtr node_;
 
   unsigned int fps_;
   unsigned int bit_rate_;

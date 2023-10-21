@@ -28,7 +28,7 @@
 
 #include <boost/filesystem/operations.hpp>
 
-#include <ros/ros.h>
+#include <rclcpp/node.hpp>
 
 #include <sdf/Element.hh>
 
@@ -44,10 +44,12 @@ static std::string getClassName() {
   return name.substr(name.rfind("::") + 2);
 }
 
-static bool createDirectory(const boost::filesystem::path &path) {
+static bool createDirectory(const boost::filesystem::path &path,
+                            const rclcpp::Node::SharedPtr &node) {
   if (not boost::filesystem::exists(path)) {
     if (not boost::filesystem::create_directory(path)) return false;
-    ROS_INFO_STREAM(path << " directory has been created");
+    RCLCPP_INFO_STREAM(node->get_logger(),
+                       path << " directory has been created");
   }
   return true;
 }
@@ -87,13 +89,14 @@ static RefModelConfigConstPtr parseRefModelConfig(const sdf::ElementPtr &sdf) {
  *   - link (optional, defaults to 'link'): name of the link to which to attach
  *     the camera
  */
-static RefModelConfigConstPtr parseRefModelConfig(const sdf::ElementPtr &sdf,
-                                                  ros::NodeHandle &nh) {
+static RefModelConfigConstPtr parseRefModelConfig(
+    const sdf::ElementPtr &sdf, const rclcpp::Node::SharedPtr &node) {
   RefModelConfigPtr config = std::make_shared<RefModelConfig>();
   if (sdf->HasElement("modelParam")) {
     auto model_param = sdf->Get<std::string>("modelParam");
-    if (not nh.getParam(model_param, config->model_name))
-      ROS_WARN_STREAM("Failed to retrieve " << model_param << " parameter");
+    if (not node->get_parameter(model_param, config->model_name))
+      RCLCPP_WARN_STREAM(node->get_logger(),
+                         "Failed to retrieve " << model_param << " parameter");
   }
   internal::parseRefModelConfig(sdf, config);
   return std::move(config);
