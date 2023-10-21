@@ -2,6 +2,9 @@
 Changelog for package gazebo_video_monitor_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.1 (2023-10-22)
+------------------
+
 0.7.0 (2021-08-23)
 ------------------
 * Resolve catkin lint errors
