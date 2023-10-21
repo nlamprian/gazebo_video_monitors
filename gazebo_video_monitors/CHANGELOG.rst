@@ -2,6 +2,11 @@
 Changelog for package gazebo_video_monitors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.8.0 (2023-10-22)
+------------------
+* Migrate metapackage
+* Contributors: Nick Lamprianidis
+
 0.7.0 (2021-08-23)
 ------------------
 

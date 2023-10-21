@@ -2,6 +2,11 @@
 Changelog for package gazebo_video_monitor_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.8.0 (2023-10-22)
+------------------
+* Migrate interfaces package
+* Contributors: Nick Lamprianidis
+
 0.7.0 (2021-08-23)
 ------------------
 * Resolve catkin lint errors
