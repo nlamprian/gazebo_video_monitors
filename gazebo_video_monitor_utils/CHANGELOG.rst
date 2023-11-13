@@ -2,6 +2,9 @@
 Changelog for package gazebo_video_monitor_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.8.1 (2023-11-13)
+------------------
+
 0.8.0 (2023-10-22)
 ------------------
 * Migrate utils package

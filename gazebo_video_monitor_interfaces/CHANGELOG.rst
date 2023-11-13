@@ -2,6 +2,11 @@
 Changelog for package gazebo_video_monitor_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.8.1 (2023-11-13)
+------------------
+* Add missing test dependency
+* Contributors: Nick Lamprianidis
+
 0.8.0 (2023-10-22)
 ------------------
 * Migrate interfaces package
