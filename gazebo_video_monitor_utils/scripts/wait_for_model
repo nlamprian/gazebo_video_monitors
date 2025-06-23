@@ -11,33 +11,54 @@ from std_srvs.srv import Empty
 
 
 class WaitForModel:
+    _MAX_INIT_SRV_CALLS = 5
+
     def __init__(self, model, service, delay):
         self._model = model
         self._delay = rospy.Duration.from_sec(delay)
         self._model_exists = False
-        self._call_time = None
+        self._call_start_time = None
         self._ready_event = Event()
         rospy.on_shutdown(self.on_shutdown)
 
         rospy.loginfo(f"Waiting for model {model}")
+        self._model_states_sub = rospy.Subscriber(
+            "/gazebo/model_states", ModelStates, self._model_states_cb, queue_size=1
+        )
+
         self._init_srv_client = rospy.ServiceProxy(service, Empty)
-        self._model_states_sub = rospy.Subscriber("/gazebo/model_states", ModelStates,
-                                                  self._model_states_cb)
+        self._num_init_srv_calls = 0
+        self._srv_timer = None
 
     def _model_states_cb(self, msg):
         if self._model not in msg.name:
             return
-        if not self._model_exists:
-            self._call_time = rospy.Time.now() + self._delay
-            self._model_exists = True
-        if rospy.Time.now() < self._call_time:
+        rospy.loginfo(f"Detected model {self._model}")
+        self._model_exists = True
+        self._model_states_sub.unregister()
+        self._call_start_time = rospy.Time.now() + self._delay
+        rospy.loginfo(f"Waiting for service {self._init_srv_client.resolved_name}")
+        self._timer = rospy.Timer(rospy.Duration(1.0), self._timer_cb)
+
+    def _timer_cb(self, _):
+        if rospy.Time.now() < self._call_start_time:
             return
         try:
             self._init_srv_client.wait_for_service(1)
         except rospy.ROSException:
+            self._num_init_srv_calls += 1
+            if self._num_init_srv_calls > self._MAX_INIT_SRV_CALLS:
+                rospy.logwarn(
+                    f"Failed to call service {self._init_srv_client.resolved_name}, "
+                    "giving up"
+                )
+                rospy.signal_shutdown("No service available")
+            else:
+                rospy.logwarn("Service not available yet")
             return
-        rospy.loginfo(f"Detected model {self._model}")
         self._init_srv_client.call()
+        rospy.loginfo(f"Called service {self._init_srv_client.resolved_name}")
+        self._timer.shutdown()
         self._ready_event.set()
 
     def on_shutdown(self):
