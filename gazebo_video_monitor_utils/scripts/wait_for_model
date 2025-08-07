@@ -56,6 +56,7 @@ class WaitForModel:
             else:
                 rospy.logwarn("Service not available yet")
             return
+        rospy.loginfo(f"Calling service {self._init_srv_client.resolved_name}")
         self._init_srv_client.call()
         rospy.loginfo(f"Called service {self._init_srv_client.resolved_name}")
         self._timer.shutdown()
